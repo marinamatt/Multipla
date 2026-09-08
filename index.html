@@ -180,9 +180,9 @@
       </div>
     </footer>
 
-    <dialog id="login-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+    <dialog id="login-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink" aria-labelledby="login-title">
       <form id="login-form" class="space-y-4">
-        <h2 class="font-display text-2xl">Entrar para participar</h2>
+        <h2 id="login-title" class="font-display text-2xl">Entrar para participar</h2>
         <p class="text-sm">
           Autenticação via Google (Supabase Auth). Sem cadastro extra. O e-mail não é publicado no feed.
         </p>
@@ -205,7 +205,7 @@
       </form>
     </dialog>
 
-    <dialog id="confirm-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+    <dialog id="confirm-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink" aria-labelledby="confirm-title">
       <form method="dialog" class="space-y-4">
         <h2 class="font-display text-xl" id="confirm-title">Confirmar</h2>
         <p id="confirm-message" class="text-sm"></p>
@@ -218,9 +218,9 @@
       </form>
     </dialog>
 
-    <dialog id="report-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+    <dialog id="report-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink" aria-labelledby="report-title">
       <form id="report-form" class="space-y-4">
-        <h2 class="font-display text-xl">Denunciar conteúdo</h2>
+        <h2 id="report-title" class="font-display text-xl">Denunciar conteúdo</h2>
         <label class="block text-sm">
           Motivo
           <textarea id="report-reason" required minlength="3" maxlength="500" rows="3" class="mt-1 w-full rounded border border-line p-2"></textarea>

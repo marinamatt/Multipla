@@ -172,22 +172,22 @@ $$;
 drop trigger if exists posts_set_user on public.posts;
 create trigger posts_set_user
   before insert on public.posts
-  for each row execute function public.set_auth_user_id();
+  for each row execute procedure public.set_auth_user_id();
 
 drop trigger if exists comments_set_user on public.comments;
 create trigger comments_set_user
   before insert on public.comments
-  for each row execute function public.set_auth_user_id();
+  for each row execute procedure public.set_auth_user_id();
 
 drop trigger if exists likes_set_user on public.likes;
 create trigger likes_set_user
   before insert on public.likes
-  for each row execute function public.set_auth_user_id();
+  for each row execute procedure public.set_auth_user_id();
 
 drop trigger if exists consents_set_user on public.consents;
 create trigger consents_set_user
   before insert on public.consents
-  for each row execute function public.set_auth_user_id();
+  for each row execute procedure public.set_auth_user_id();
 
 create or replace function public.set_reporter_id()
 returns trigger
@@ -207,7 +207,7 @@ $$;
 drop trigger if exists reports_set_reporter on public.reports;
 create trigger reports_set_reporter
   before insert on public.reports
-  for each row execute function public.set_reporter_id();
+  for each row execute procedure public.set_reporter_id();
 
 create or replace function public.refresh_likes_count()
 returns trigger
@@ -229,12 +229,12 @@ $$;
 drop trigger if exists likes_count_ins on public.likes;
 create trigger likes_count_ins
   after insert on public.likes
-  for each row execute function public.refresh_likes_count();
+  for each row execute procedure public.refresh_likes_count();
 
 drop trigger if exists likes_count_del on public.likes;
 create trigger likes_count_del
   after delete on public.likes
-  for each row execute function public.refresh_likes_count();
+  for each row execute procedure public.refresh_likes_count();
 
 create or replace function public.refresh_comments_count()
 returns trigger
@@ -259,17 +259,17 @@ $$;
 drop trigger if exists comments_count_ins on public.comments;
 create trigger comments_count_ins
   after insert on public.comments
-  for each row execute function public.refresh_comments_count();
+  for each row execute procedure public.refresh_comments_count();
 
 drop trigger if exists comments_count_del on public.comments;
 create trigger comments_count_del
   after delete on public.comments
-  for each row execute function public.refresh_comments_count();
+  for each row execute procedure public.refresh_comments_count();
 
 drop trigger if exists comments_count_upd on public.comments;
 create trigger comments_count_upd
   after update of is_hidden, post_id on public.comments
-  for each row execute function public.refresh_comments_count();
+  for each row execute procedure public.refresh_comments_count();
 
 -- Perfil automático no cadastro (Google OAuth)
 create or replace function public.handle_new_user()
@@ -304,7 +304,7 @@ $$;
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
-  for each row execute function public.handle_new_user();
+  for each row execute procedure public.handle_new_user();
 
 -- -----------------------------------------------------------------------------
 -- Views públicas: NUNCA expõem user_id (auditoria fica só nas tabelas-base)
@@ -682,3 +682,5 @@ $$;
 
 revoke all on function public.delete_my_contributions() from public;
 grant execute on function public.delete_my_contributions() to authenticated;
+
+notify pgrst, 'reload schema';
