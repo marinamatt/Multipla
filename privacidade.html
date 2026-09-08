@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Termos de Privacidade — Múltipla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body class="app-body min-h-screen">
+    <header class="bg-ink text-paper">
+      <div class="mx-auto max-w-3xl px-4 py-4">
+        <a href="./index.html" class="underline">← Voltar ao debate</a>
+      </div>
+    </header>
+    <main class="mx-auto max-w-3xl px-4 py-10">
+      <h1 class="font-display text-3xl">Termos de Privacidade da Campanha</h1>
+      <p class="mt-2 text-sm text-ink/70">Plataforma temporária Múltipla · Conselho de Arquitetura · LGPD (Lei 13.709/2018)</p>
+
+      <section class="card-sheet mt-6 space-y-4 rounded-lg p-6 text-sm leading-relaxed">
+        <h2 class="font-display text-xl">1. Quem trata os dados</h2>
+        <p>
+          O controlador é o Conselho de Arquitetura responsável pela campanha. O tratamento ocorre em infraestrutura
+          gratuita (Supabase e Netlify/Vercel) exclusivamente para viabilitar o debate público temporário.
+        </p>
+
+        <h2 class="font-display text-xl">2. Quais dados são tratados</h2>
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Identificadores de autenticação do Google (nome, e-mail, foto de perfil).</li>
+          <li>Conteúdo das publicações e comentários que você envia.</li>
+          <li>Apoios (curtidas) vinculados à sua conta, sem lista pública de quem votou.</li>
+          <li>Registro de consentimento e data/hora de participação.</li>
+        </ul>
+
+        <h2 class="font-display text-xl">3. Publicação pseudonimizada</h2>
+        <p>
+          Se você marcar “Publicar como anônimo”, o feed exibe apenas “Arquiteto(a) Anônimo(a)”. O identificador da
+          conta (<code>user_id</code>) permanece no banco, com chave estrangeira, só para auditoria legal, segurança e
+          moderação. Esse identificador <strong>não é devolvido</strong> nas consultas públicas do feed.
+        </p>
+
+        <h2 class="font-display text-xl">4. Finalidade e base legal</h2>
+        <p>
+          A finalidade é a participação no debate da campanha. A base principal é o consentimento (art. 7º, I, da
+          LGPD), coletado no login e em cada envio. Não usamos os dados para publicidade, perfilamento comercial ou
+          venda a terceiros.
+        </p>
+
+        <h2 class="font-display text-xl">5. Direitos da pessoa titular</h2>
+        <ul class="list-disc space-y-1 pl-5">
+          <li>Eliminação das próprias publicações e comentários a qualquer momento (art. 18, VI).</li>
+          <li>Exclusão em lote de todas as contribuições pelo menu da conta.</li>
+          <li>Acesso ao conteúdo que você mesmo publicou no feed (quando não anônimo) e à sua sessão autenticada.</li>
+        </ul>
+
+        <h2 class="font-display text-xl">6. Moderação</h2>
+        <p>
+          Administradores podem excluir publicações e ocultar comentários inadequados, bem como analisar denúncias.
+          Essa atividade visa a segurança da comunidade e o cumprimento da campanha.
+        </p>
+
+        <h2 class="font-display text-xl">7. Conservação</h2>
+        <p>
+          A plataforma é temporária. Ao encerrar a campanha, o controlador deve desativar o projeto e eliminar ou
+          anonimizar os dados que não precisem ser conservados por obrigação legal.
+        </p>
+
+        <h2 class="font-display text-xl">8. Segurança</h2>
+        <p>
+          Acesso às tabelas é controlado por Row Level Security (RLS). A chave <code>service_role</code> jamais é
+          embarcada no navegador. Há honeypot e intervalo mínimo entre envios para reduzir spam.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

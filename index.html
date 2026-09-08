@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Múltipla — debate público e temporário do Conselho de Arquitetura. Ideias, reclamações e apoios com privacidade (LGPD)."
+    />
+    <title>Múltipla — Debate do Conselho de Arquitetura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#1a2f38",
+              paper: "#f4efe4",
+              line: "#c9b896",
+              accent: "#8c2f1b",
+              focus: "#0f5c6e",
+            },
+            fontFamily: {
+              display: ['Fraunces', "Times New Roman", "serif"],
+              sans: ['Atkinson Hyperlegible', "Segoe UI", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body class="app-body min-h-screen">
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="sticky top-0 z-40 bg-ink text-paper">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-3">
+        <a href="./index.html" class="flex items-center gap-3 text-paper no-underline">
+          <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true">
+            <rect x="2" y="2" width="32" height="32" fill="none" stroke="#e8dcc8" stroke-width="1.5" />
+            <path d="M8 26 L18 8 L28 26" fill="none" stroke="#e8dcc8" stroke-width="1.6" />
+            <path d="M12 20 H24" stroke="#e8dcc8" stroke-width="1.6" />
+          </svg>
+          <span>
+            <span class="font-display block text-lg leading-tight">Múltipla</span>
+            <span class="block text-xs tracking-wide text-paper/80">Conselho de Arquitetura · campanha temporária</span>
+          </span>
+        </a>
+
+        <div class="ml-auto flex items-center gap-3" id="auth-slot">
+          <div class="h-8 w-40 animate-pulse rounded bg-white/10" aria-hidden="true"></div>
+        </div>
+      </div>
+    </header>
+
+    <div id="config-banner" class="hidden border-b border-amber-300 bg-amber-100 px-4 py-3 text-sm text-ink" role="status"></div>
+    <div id="live-region" class="sr-only" aria-live="polite"></div>
+
+    <section id="compose-bar" class="compose-bar sticky top-[4.25rem] z-30 hidden">
+      <form id="post-form" class="mx-auto grid max-w-5xl gap-3 px-4 py-3 md:grid-cols-[10rem_1fr_auto]" novalidate>
+        <label class="sr-only" for="post-type">Categoria</label>
+        <select
+          id="post-type"
+          name="type"
+          class="h-11 rounded border border-line bg-white px-3 text-sm text-ink"
+          required
+        >
+          <option value="ideia">Ideia</option>
+          <option value="reclamacao">Reclamação</option>
+        </select>
+
+        <label class="sr-only" for="post-content">Texto da publicação</label>
+        <textarea
+          id="post-content"
+          name="content"
+          maxlength="2000"
+          rows="2"
+          required
+          placeholder="Escreva uma ideia ou reclamação para o debate…"
+          class="w-full resize-y rounded border border-line bg-white px-3 py-2 text-sm text-ink"
+        ></textarea>
+
+        <button
+          type="submit"
+          class="h-11 rounded bg-accent px-4 text-sm font-bold text-white hover:bg-[#6e2415]"
+        >
+          Publicar
+        </button>
+
+        <input
+          type="text"
+          name="b_phone_check"
+          class="hidden visually-hidden-hp"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+          style="display: none !important"
+        />
+
+        <div class="md:col-span-3 flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <label class="inline-flex items-start gap-2">
+            <input id="post-anonymous" type="checkbox" class="mt-1" />
+            <span>Publicar como anônimo <span class="text-ink/60">(exibe “Arquiteto(a) Anônimo(a)”)</span></span>
+          </label>
+          <label class="inline-flex items-start gap-2">
+            <input id="post-lgpd" type="checkbox" required class="mt-1" />
+            <span>
+              Concordo com os
+              <a class="underline" href="./privacidade.html" target="_blank" rel="noopener noreferrer">Termos de Privacidade da Campanha</a>
+              e com o tratamento dos meus dados para fins de participação no debate.
+            </span>
+          </label>
+        </div>
+        <p id="post-feedback" class="md:col-span-3 text-sm" role="status"></p>
+      </form>
+    </section>
+
+    <main id="conteudo" class="mx-auto max-w-5xl px-4 py-8">
+      <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 class="font-display text-3xl text-ink">Mesa de debate</h1>
+          <p class="mt-1 max-w-2xl text-sm text-ink/80">
+            Espaço temporário para ideias e reclamações da categoria. Você pode publicar em nome próprio ou de forma
+            pseudonimizada. O identificador técnico permanece protegido para auditoria e moderação, sem aparecer no feed.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Filtros do feed">
+          <label class="text-sm">
+            <span class="sr-only">Filtrar por tipo</span>
+            <select id="filter-type" class="rounded border border-line bg-white px-3 py-2">
+              <option value="todos">Todas</option>
+              <option value="ideia">Ideias</option>
+              <option value="reclamacao">Reclamações</option>
+            </select>
+          </label>
+          <label class="text-sm">
+            <span class="sr-only">Ordenar</span>
+            <select id="filter-sort" class="rounded border border-line bg-white px-3 py-2">
+              <option value="recentes">Mais recentes</option>
+              <option value="apoios">Mais apoios</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <section id="admin-panel" class="mb-8 hidden card-sheet rounded-lg p-4" aria-labelledby="admin-title">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h2 id="admin-title" class="font-display text-xl">Modo de moderação</h2>
+          <span class="stamp stamp-reclamacao">Administrador</span>
+        </div>
+        <p class="mb-4 text-sm text-ink/80">
+          Denúncias, ocultação de comentários inadequados e exclusão de publicações. O autor real de postagens anônimas
+          não é exibido neste painel — apenas o conteúdo e a data.
+        </p>
+        <div id="reports-list" class="space-y-3"></div>
+      </section>
+
+      <section aria-labelledby="feed-title">
+        <h2 id="feed-title" class="sr-only">Publicações</h2>
+        <div id="feed" class="space-y-4"></div>
+        <p id="feed-empty" class="hidden card-sheet rounded-lg p-8 text-center text-ink/70">
+          Ainda não há publicações neste filtro. Seja a primeira pessoa a abrir o debate.
+        </p>
+      </section>
+    </main>
+
+    <footer class="border-t border-line bg-white/70">
+      <div class="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-6 text-sm text-ink/80 sm:flex-row sm:justify-between">
+        <p>Campanha temporária. Dados tratados conforme a LGPD (Lei 13.709/2018).</p>
+        <p>
+          <a class="underline" href="./privacidade.html">Privacidade</a>
+          · Direito de eliminação no próprio card ou pelo menu da conta.
+        </p>
+      </div>
+    </footer>
+
+    <dialog id="login-dialog" class="w-[min(32rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+      <form id="login-form" class="space-y-4">
+        <h2 class="font-display text-2xl">Entrar para participar</h2>
+        <p class="text-sm">
+          Autenticação via Google (Supabase Auth). Sem cadastro extra. O e-mail não é publicado no feed.
+        </p>
+        <label class="flex items-start gap-2 text-sm">
+          <input id="login-lgpd" type="checkbox" required class="mt-1" />
+          <span>
+            Concordo com os
+            <a class="underline" href="./privacidade.html" target="_blank" rel="noopener noreferrer">Termos de Privacidade da Campanha</a>
+            e com o tratamento dos meus dados para fins de participação no debate.
+          </span>
+        </label>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="rounded bg-ink px-4 py-2 text-sm font-bold text-paper">
+            Entrar com Google
+          </button>
+          <button type="button" id="login-cancel" class="rounded border border-line px-4 py-2 text-sm" value="cancel">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+      <form method="dialog" class="space-y-4">
+        <h2 class="font-display text-xl" id="confirm-title">Confirmar</h2>
+        <p id="confirm-message" class="text-sm"></p>
+        <div class="flex gap-2">
+          <button id="confirm-ok" value="ok" class="rounded bg-accent px-4 py-2 text-sm font-bold text-white">
+            Confirmar
+          </button>
+          <button value="cancel" class="rounded border border-line px-4 py-2 text-sm">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="report-dialog" class="w-[min(28rem,calc(100%-2rem))] rounded-lg border border-line bg-paper p-5 text-ink">
+      <form id="report-form" class="space-y-4">
+        <h2 class="font-display text-xl">Denunciar conteúdo</h2>
+        <label class="block text-sm">
+          Motivo
+          <textarea id="report-reason" required minlength="3" maxlength="500" rows="3" class="mt-1 w-full rounded border border-line p-2"></textarea>
+        </label>
+        <input type="hidden" id="report-post-id" />
+        <input type="hidden" id="report-comment-id" />
+        <div class="flex gap-2">
+          <button type="submit" class="rounded bg-ink px-4 py-2 text-sm font-bold text-paper">Enviar denúncia</button>
+          <button type="button" id="report-cancel" class="rounded border border-line px-4 py-2 text-sm">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="post-card-template">
+      <article class="card-sheet rounded-lg p-4" data-post-card>
+        <header class="mb-3 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <span data-badge class="stamp"></span>
+            <p class="mt-2 text-sm">
+              <span data-author class="font-bold"></span>
+              <span class="text-ink/60"> · </span>
+              <time data-date class="text-ink/70"></time>
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2" data-admin-actions></div>
+        </header>
+        <h3 data-title class="font-display text-xl"></h3>
+        <p data-content class="mt-2 whitespace-pre-wrap text-[0.95rem] leading-relaxed"></p>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <button type="button" data-like class="rounded border border-line bg-white px-3 py-1.5 text-sm">
+            Apoiar <span data-like-count class="font-bold">0</span>
+          </button>
+          <button type="button" data-toggle-comments class="rounded border border-line bg-white px-3 py-1.5 text-sm" aria-expanded="false">
+            Comentários (<span data-comment-count>0</span>)
+          </button>
+          <button type="button" data-report class="rounded px-2 py-1.5 text-sm underline">Denunciar</button>
+          <button type="button" data-delete-own class="hidden rounded px-2 py-1.5 text-sm underline">Excluir minha publicação</button>
+        </div>
+        <section data-comments-panel class="mt-4 hidden border-t border-dashed border-line pt-3" aria-label="Comentários">
+          <div data-comments-list class="space-y-3"></div>
+          <form data-comment-form class="mt-3 hidden space-y-2">
+            <label class="sr-only" data-comment-label>Comentar</label>
+            <textarea data-comment-input maxlength="800" rows="2" required placeholder="Escreva um comentário…" class="w-full rounded border border-line p-2 text-sm"></textarea>
+            <input type="text" name="b_phone_check" class="hidden visually-hidden-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none !important" />
+            <div class="flex flex-col gap-2 text-sm sm:flex-row sm:items-center">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" data-comment-anon />
+                Comentar como anônimo
+              </label>
+              <label class="inline-flex items-start gap-2">
+                <input type="checkbox" data-comment-lgpd required />
+                <span>Concordo com os Termos de Privacidade da Campanha e com o tratamento dos meus dados para fins de participação no debate.</span>
+              </label>
+            </div>
+            <button type="submit" class="rounded bg-ink px-3 py-1.5 text-sm font-bold text-paper">Comentar</button>
+            <p data-comment-feedback class="text-sm"></p>
+          </form>
+        </section>
+      </article>
+    </template>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

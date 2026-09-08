@@ -1,0 +1,115 @@
+:root {
+  --ink: #1a2f38;
+  --ink-soft: #3d4f58;
+  --paper: #f4efe4;
+  --paper-deep: #e8dcc8;
+  --line: #c9b896;
+  --ideia: #1f7a4d;
+  --ideia-bg: #dcefe3;
+  --reclamacao: #c05621;
+  --reclamacao-bg: #f8e1d2;
+  --accent: #8c2f1b;
+  --focus: #0f5c6e;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body.app-body {
+  font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(rgba(155, 125, 80, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 125, 80, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ink);
+}
+
+.font-display {
+  font-family: "Fraunces", "Times New Roman", serif;
+}
+
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 80;
+  border-radius: 0.4rem;
+  background: var(--ink);
+  color: #fff;
+  padding: 0.5rem 0.85rem;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stamp-ideia {
+  color: var(--ideia);
+  background: var(--ideia-bg);
+}
+
+.stamp-reclamacao {
+  color: var(--reclamacao);
+  background: var(--reclamacao-bg);
+}
+
+.card-sheet {
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  box-shadow: 4px 4px 0 rgba(26, 47, 56, 0.08);
+}
+
+.card-sheet:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.compose-bar {
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.92);
+  backdrop-filter: blur(8px);
+}
+
+.visually-hidden-hp {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  display: none !important;
+}
+
+dialog::backdrop {
+  background: rgba(26, 47, 56, 0.55);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
