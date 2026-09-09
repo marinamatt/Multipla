@@ -1,7 +1,14 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './js/config.js';
+import {
+  MENSAGEM_CONTEUDO_RETIDO,
+  MIN_CHARS,
+  MAX_CHARS_POST,
+  MAX_CHARS_COMENTARIO,
+  podeEnviarMensagem,
+} from './js/moderation.js';
 
-const RATE_LIMIT_MS = 3 * 60 * 1000;
+const RATE_LIMIT_MS = 30 * 1000;
 const RATE_KEY = 'multipla_last_submit_at';
 const CONFIG_READY =
   Boolean(SUPABASE_URL) &&
@@ -42,6 +49,7 @@ const els = {
   cauForm: document.getElementById('cau-form'),
   cauFeedback: document.getElementById('cau-feedback'),
   composeLock: document.getElementById('compose-lock'),
+  moderationAlert: document.getElementById('moderation-alert'),
 };
 
 let cauPromptShown = false;
@@ -195,9 +203,26 @@ function assertNotBot(form) {
 function assertRateLimit() {
   const wait = remainingRateLimit();
   if (wait > 0) {
-    const minutes = Math.ceil(wait / 60000);
-    throw new Error(`Aguarde ${minutes} min entre publicações e comentários (proteção anti-spam).`);
+    const seconds = Math.max(1, Math.ceil(wait / 1000));
+    throw new Error(`Aguarde ${seconds}s entre publicações e comentários (proteção anti-spam).`);
   }
+}
+
+function hideModerationAlert() {
+  els.moderationAlert?.classList.add('hidden');
+}
+
+function showModerationAlert() {
+  if (!els.moderationAlert) return;
+  const text = document.getElementById('moderation-alert-text');
+  if (text) text.textContent = MENSAGEM_CONTEUDO_RETIDO;
+  els.moderationAlert.classList.remove('hidden');
+  announce(MENSAGEM_CONTEUDO_RETIDO);
+}
+
+function reterConteudo(feedbackNode) {
+  showModerationAlert();
+  showFeedback(feedbackNode, MENSAGEM_CONTEUDO_RETIDO, true);
 }
 
 function markSubmitted() {
@@ -610,12 +635,6 @@ async function submitPost(event) {
   event.preventDefault();
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
-  try {
-    assertRateLimit();
-  } catch (error) {
-    showFeedback(els.postFeedback, error.message, true);
-    return;
-  }
   if (!hasCauNumber()) {
     showFeedback(els.postFeedback, 'Informe e valide o seu registro do CAU para publicar.', true);
     openCauModal();
@@ -626,6 +645,16 @@ async function submitPost(event) {
     return;
   }
   const content = document.getElementById('post-content').value.trim();
+  if (!podeEnviarMensagem(content, { min: MIN_CHARS, max: MAX_CHARS_POST })) {
+    reterConteudo(els.postFeedback);
+    return;
+  }
+  try {
+    assertRateLimit();
+  } catch (error) {
+    showFeedback(els.postFeedback, error.message, true);
+    return;
+  }
   const type = document.getElementById('post-type').value;
   const isAnonymous = document.getElementById('post-anonymous').checked;
   const title = content.slice(0, 80);
@@ -643,6 +672,7 @@ async function submitPost(event) {
     return;
   }
   markSubmitted();
+  hideModerationAlert();
   form.reset();
   document.getElementById('post-type').value = type;
   showFeedback(els.postFeedback, 'Publicação enviada.');
@@ -656,18 +686,22 @@ async function submitComment(event, postId, card) {
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
   const feedback = card.querySelector('[data-comment-feedback]');
-  try {
-    assertRateLimit();
-  } catch (error) {
-    showFeedback(feedback, error.message, true);
-    return;
-  }
   const lgpd = form.querySelector('[data-comment-lgpd]');
   if (!lgpd.checked) {
     showFeedback(feedback, 'É necessário aceitar os Termos de Privacidade.', true);
     return;
   }
   const content = form.querySelector('[data-comment-input]').value.trim();
+  if (!podeEnviarMensagem(content, { min: MIN_CHARS, max: MAX_CHARS_COMENTARIO })) {
+    reterConteudo(feedback);
+    return;
+  }
+  try {
+    assertRateLimit();
+  } catch (error) {
+    showFeedback(feedback, error.message, true);
+    return;
+  }
   await recordConsent();
   const { error } = await state.supabase.from('comments').insert({
     post_id: postId,
@@ -680,6 +714,7 @@ async function submitComment(event, postId, card) {
     return;
   }
   markSubmitted();
+  hideModerationAlert();
   form.reset();
   showFeedback(feedback, 'Comentário publicado.');
   await renderComments(postId, card);
@@ -814,6 +849,7 @@ function bindStaticEvents() {
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
+  document.getElementById('moderation-alert-close')?.addEventListener('click', hideModerationAlert);
   document.getElementById('cau-number')?.addEventListener('input', (event) => {
     const caret = event.target.selectionStart;
     const before = event.target.value;

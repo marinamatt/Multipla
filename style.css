@@ -506,6 +506,33 @@ body.app-body::before {
   color: var(--text-muted);
 }
 
+.moderation-alert {
+  position: fixed;
+  top: calc(var(--header-h) + 0.85rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 90;
+  width: min(32rem, calc(100% - 2rem));
+}
+
+.moderation-alert.hidden {
+  display: none;
+}
+
+.moderation-alert-card {
+  padding: 1.25rem 1.4rem 1.15rem;
+}
+
+.moderation-alert-card:hover {
+  transform: none;
+}
+
+.moderation-alert-card p {
+  margin: 0 0 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
 .checks {
   display: flex;
   flex-direction: column;
