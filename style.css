@@ -5,10 +5,11 @@
   --text-muted: rgba(29, 29, 31, 0.56);
   --card-radius: 20px;
   --liquid-glass-bg: rgba(255, 255, 255, 0.4);
-  --grad-cyan: linear-gradient(135deg, #24c6dc 0%, #3f5efb 100%);
-  --grad-warm: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
-  --focus: #3f5efb;
-  --header-h: 4.25rem;
+  --grad-cyan: linear-gradient(135deg, #00d2ff 0%, #2d5bff 100%);
+  --grad-warm: linear-gradient(135deg, #ff4b8b 0%, #ffb800 100%);
+  --spectrum: linear-gradient(90deg, #ffb800 0%, #ff7a00 18%, #ff4b8b 40%, #8a2be2 62%, #2d5bff 82%, #00d2ff 100%);
+  --focus: #2d5bff;
+  --header-h: 4.75rem;
 }
 
 *,
@@ -38,10 +39,10 @@ body.app-body::before {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 55% 42% at 8% -4%, rgba(36, 198, 220, 0.22), transparent 55%),
-    radial-gradient(ellipse 48% 38% at 96% 4%, rgba(63, 94, 251, 0.16), transparent 52%),
-    radial-gradient(ellipse 42% 36% at 88% 92%, rgba(255, 107, 107, 0.16), transparent 55%),
-    radial-gradient(ellipse 38% 30% at 6% 96%, rgba(255, 217, 61, 0.14), transparent 50%);
+    radial-gradient(ellipse 55% 42% at 8% -4%, rgba(0, 210, 255, 0.2), transparent 55%),
+    radial-gradient(ellipse 48% 38% at 96% 4%, rgba(138, 43, 226, 0.14), transparent 52%),
+    radial-gradient(ellipse 42% 36% at 88% 92%, rgba(255, 75, 139, 0.16), transparent 55%),
+    radial-gradient(ellipse 38% 30% at 6% 96%, rgba(255, 184, 0, 0.16), transparent 50%);
 }
 
 .page-shell {
@@ -91,8 +92,14 @@ body.app-body::before {
   z-index: 40;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  background: rgba(255, 255, 255, 0.55);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.site-header::after {
+  content: "";
+  display: block;
+  height: 3px;
+  background: var(--spectrum);
 }
 
 .header-inner {
@@ -112,18 +119,13 @@ body.app-body::before {
   color: var(--text-primary);
 }
 
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 6px 12px rgba(63, 94, 251, 0.18));
-}
-
-.brand-name {
-  font-size: 1.35rem;
-  font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 1;
+.brand-logo {
+  display: block;
+  height: 52px;
+  width: auto;
+  max-width: min(320px, 62vw);
+  object-fit: contain;
+  background: transparent;
 }
 
 .auth-slot {
