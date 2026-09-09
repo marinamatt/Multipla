@@ -2,7 +2,7 @@ import { CAU_SC_ATIVOS } from './cau-sc-ativos.js';
 
 /**
  * Forma canônica da lista oficial: 10 caracteres, zeros à esquerda + A + dígitos.
- * Aceita A254056-8, A2540568, 00A2540568, 2540568, etc.
+ * Aceita A765432-1, A7654321, 00A7654321, 7654321, etc.
  */
 export function canonicalCau(cau) {
   let value = String(cau || '')
@@ -24,10 +24,10 @@ export function validarRegistroCAU(cau) {
 export function mensagemErroRegistroCAU(cau) {
   const raw = String(cau || '').trim();
   if (!raw) {
-    return 'Informe o seu registro do CAU, como no SICCAU (ex.: A254056-8).';
+    return 'Informe o seu registro do CAU, como no SICCAU (ex.: A765432-1).';
   }
   if (!canonicalCau(raw)) {
-    return 'Use o número do CAU com a letra A e os dígitos (ex.: A254056-8 ou 00A2540568).';
+    return 'Use o número do CAU com a letra A e os dígitos (ex.: A765432-1 ou 00A7654321).';
   }
   if (!validarRegistroCAU(raw)) {
     return 'Este número não consta na relação de profissionais ativos do CAU/SC. Confira no SICCAU ou no seu cartão.';
