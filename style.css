@@ -92,7 +92,7 @@ body.app-body::before {
   z-index: 40;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.38);
 }
 
 .site-header::after {
