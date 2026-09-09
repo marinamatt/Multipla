@@ -198,6 +198,32 @@ begin
 end;
 $$;
 
+create or replace function public.cau_digit_modulo11_ltr(p_digits text)
+returns integer
+language plpgsql
+immutable
+as $$
+declare
+  i int;
+  soma int := 0;
+  peso int := 2;
+  resto int;
+begin
+  if p_digits is null or p_digits !~ '^[0-9]+$' then
+    return null;
+  end if;
+  for i in 1 .. char_length(p_digits) loop
+    soma := soma + substr(p_digits, i, 1)::int * peso;
+    peso := case when peso >= 9 then 2 else peso + 1 end;
+  end loop;
+  resto := soma % 11;
+  if resto = 10 then
+    return 0;
+  end if;
+  return resto;
+end;
+$$;
+
 create or replace function public.cau_number_is_valid(p_cau text)
 returns boolean
 language plpgsql
@@ -213,7 +239,8 @@ begin
   end if;
   corpo := substring(v from '^A([0-9]+)-[0-9]$');
   dv := substring(v from '-([0-9])$')::int;
-  return public.cau_digit_modulo11(corpo) = dv;
+  return public.cau_digit_modulo11(corpo) = dv
+      or public.cau_digit_modulo11_ltr(corpo) = dv;
 end;
 $$;
 
@@ -261,8 +288,11 @@ $$;
 
 revoke all on function public.normalize_cau_number(text) from public;
 revoke all on function public.cau_digit_modulo11(text) from public;
+revoke all on function public.cau_digit_modulo11_ltr(text) from public;
 revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
+grant execute on function public.cau_digit_modulo11(text) to authenticated;
+grant execute on function public.cau_digit_modulo11_ltr(text) to authenticated;
 grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
 

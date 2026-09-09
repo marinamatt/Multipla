@@ -74,7 +74,7 @@ function normalizarRegistroCAU(cau) {
     .replace(/\s+/g, '');
 }
 
-function digitoVerificadorModulo11(digitos) {
+function digitoVerificadorModulo11Direita(digitos) {
   const nums = String(digitos);
   let soma = 0;
   let peso = 2;
@@ -86,8 +86,22 @@ function digitoVerificadorModulo11(digitos) {
   return resto < 2 ? 0 : 11 - resto;
 }
 
+function digitoVerificadorModulo11Esquerda(digitos) {
+  const nums = String(digitos);
+  let soma = 0;
+  let peso = 2;
+  for (let i = 0; i < nums.length; i += 1) {
+    soma += Number(nums[i]) * peso;
+    peso = peso === 9 ? 2 : peso + 1;
+  }
+  const resto = soma % 11;
+  return resto === 10 ? 0 : resto;
+}
+
 /**
  * Valida o registro do CAU: letra A, números e dígito verificador (Módulo 11).
+ * Aceita as duas convenções usuais (pesos da direita ou da esquerda), porque o SICCAU
+ * emite números reais que não batem com um único sentido de peso.
  * @param {string} cau
  * @returns {boolean}
  */
@@ -95,7 +109,12 @@ function validarRegistroCAU(cau) {
   const value = normalizarRegistroCAU(cau);
   const match = /^A(\d{5,8})-(\d)$/.exec(value);
   if (!match) return false;
-  return digitoVerificadorModulo11(match[1]) === Number(match[2]);
+  const corpo = match[1];
+  const dv = Number(match[2]);
+  return (
+    digitoVerificadorModulo11Direita(corpo) === dv ||
+    digitoVerificadorModulo11Esquerda(corpo) === dv
+  );
 }
 
 function mensagemErroRegistroCAU(cau) {
@@ -181,20 +200,18 @@ async function rpcComTimeout(fn, ms = 12000) {
 }
 
 async function persistCauNumber(cau) {
-  const rpc = await rpcComTimeout(() => state.supabase.rpc('set_cau_number', { p_cau: cau }));
-  if (!rpc.error) {
-    const payload = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
-    const saved = typeof payload === 'string' || payload == null ? payload : payload.cau_number;
-    return { cau_number: saved || cau };
+  let rpc;
+  try {
+    rpc = await rpcComTimeout(() => state.supabase.rpc('set_cau_number', { p_cau: cau }));
+  } catch (err) {
+    throw new Error(err?.message || err?.details || 'timeout');
   }
-
-  const fallback = await rpcComTimeout(() =>
-    state.supabase.from('profiles').update({ cau_number: cau }).eq('id', state.user.id).select('id'),
-  );
-  if (fallback.error || !fallback.data?.length) {
-    throw new Error(rpc.error.message || fallback.error?.message || 'nao foi possivel salvar o registro CAU');
+  if (rpc.error) {
+    throw new Error(rpc.error.message || rpc.error.details || 'nao foi possivel salvar o registro CAU');
   }
-  return { cau_number: cau };
+  const payload = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+  const saved = typeof payload === 'string' || payload == null ? payload : payload.cau_number;
+  return { cau_number: saved || cau };
 }
 
 async function submitCau(event) {
