@@ -97,14 +97,9 @@
                 <input id="post-anonymous" type="checkbox" class="mt-1" />
                 <span>Publicar como anônimo <span class="meta">(exibe “Arquiteto(a) Anônimo(a)”)</span></span>
               </label>
-              <label class="inline-flex items-start gap-2">
-                <input id="post-lgpd" type="checkbox" required class="mt-1" />
-                <span>
-                  Concordo com os
-                  <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">Termos de Privacidade da Campanha</a>
-                  e com o tratamento dos meus dados para fins de participação no debate.
-                </span>
-              </label>
+              <p class="meta" style="margin: 0">
+                O aceite da LGPD é feito uma vez, no cadastro do registro CAU.
+              </p>
             </div>
             <p id="post-feedback" class="meta" style="grid-column: 1 / -1" role="status"></p>
             <p class="hashtag-hint" style="grid-column: 1 / -1">
@@ -112,7 +107,7 @@
             </p>
           </form>
             <div id="compose-lock" class="compose-lock hidden">
-              <p>Para publicar, informe e valide o seu registro no CAU.</p>
+              <p>Para publicar, informe o registro no CAU e aceite os Termos de Privacidade (LGPD).</p>
               <button type="button" id="btn-open-cau" class="btn btn-primary">Informar registro CAU</button>
             </div>
           </div>
@@ -196,7 +191,7 @@
       </div>
     </div>
 
-    <dialog id="cau-dialog" class="liquid-card dialog-sheet" aria-labelledby="cau-title">
+    <dialog id="cau-dialog" class="liquid-card dialog-sheet cau-modal" aria-labelledby="cau-title">
       <form id="cau-form" class="space-y-4" novalidate>
         <h2 id="cau-title" class="title-xl" style="font-size: 1.6rem">Registro no CAU</h2>
         <p class="lede">
@@ -224,12 +219,65 @@
           <input id="cau-declaration" type="checkbox" required class="mt-1" />
           <span>Declaro ser arquiteto(a) e urbanista ativo(a) em Santa Catarina</span>
         </label>
+        <div class="flex items-start gap-2 text-sm">
+          <input id="cau-lgpd" name="lgpd_consent" type="checkbox" required class="mt-1" />
+          <span>
+            <label for="cau-lgpd">Li e concordo com os</label>
+            <a href="./privacidade.html" id="lgpd-policy-link" class="policy-link">Termos e Política de Privacidade (LGPD)</a><label for="cau-lgpd">.
+            Autorizo o uso dos meus dados exclusivamente para participação nos debates e comunicações desta chapa eleitoral do CAU/SC.</label>
+          </span>
+        </div>
         <p id="cau-feedback" class="meta" role="status"></p>
         <div class="flex flex-wrap gap-2">
           <button type="submit" id="cau-submit" class="btn btn-primary">Validar e salvar</button>
           <button type="button" id="cau-cancel" class="btn btn-ghost">Agora não</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="lgpd-policy-dialog" class="liquid-card dialog-sheet policy-sheet" aria-labelledby="lgpd-policy-title">
+      <div class="policy-sheet-body">
+        <h2 id="lgpd-policy-title" class="title-xl" style="font-size: 1.4rem">Termos e Política de Privacidade (LGPD)</h2>
+        <p class="lede">Chapa Múltipla CAU/SC · Lei 13.709/2018</p>
+        <h3 class="card-title">1. Quem trata os dados</h3>
+        <p>
+          O controlador é a Chapa Múltipla, campanha ao CAU/SC. O tratamento ocorre em infraestrutura
+          (Supabase e Netlify) só para viabilizar o debate público temporário desta chapa eleitoral.
+        </p>
+        <h3 class="card-title">2. Quais dados são tratados</h3>
+        <ul>
+          <li>Identificadores de autenticação do Google (nome, e-mail, foto de perfil).</li>
+          <li>Número de registro no CAU/SC, quando informado para publicar.</li>
+          <li>Conteúdo das publicações e comentários que você envia.</li>
+          <li>Apoios (curtidas) vinculados à sua conta, sem lista pública de quem votou.</li>
+          <li>Registro de consentimento (LGPD) e data/hora do aceite.</li>
+        </ul>
+        <h3 class="card-title">3. Finalidade e base legal</h3>
+        <p>
+          Os dados são usados exclusivamente para participação nos debates e comunicações desta chapa
+          eleitoral do CAU/SC. A base principal é o consentimento (art. 7º, I, da LGPD).
+        </p>
+        <h3 class="card-title">4. Publicação pseudonimizada</h3>
+        <p>
+          Se você marcar “Publicar como anônimo”, o feed exibe “Arquiteto(a) Anônimo(a)”. O identificador
+          da conta permanece no banco só para auditoria, segurança e moderação.
+        </p>
+        <h3 class="card-title">5. Direitos da pessoa titular</h3>
+        <ul>
+          <li>Eliminação das próprias publicações e comentários a qualquer momento (art. 18, VI).</li>
+          <li>Exclusão em lote de todas as contribuições pelo menu da conta.</li>
+        </ul>
+        <h3 class="card-title">6. Conservação</h3>
+        <p>
+          A plataforma é temporária. Ao encerrar a campanha, o controlador deve desativar o projeto e
+          eliminar ou anonimizar os dados que não precisem ser conservados por obrigação legal.
+        </p>
+        <p class="meta">
+          Texto completo também em
+          <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">privacidade.html</a>.
+        </p>
+        <button type="button" id="lgpd-policy-close" class="btn btn-primary">Fechar</button>
+      </div>
     </dialog>
 
     <dialog id="login-dialog" class="liquid-card dialog-sheet" aria-labelledby="login-title">
@@ -310,10 +358,6 @@
               <label class="inline-flex items-center gap-2">
                 <input type="checkbox" data-comment-anon />
                 Comentar como anônimo
-              </label>
-              <label class="inline-flex items-start gap-2">
-                <input type="checkbox" data-comment-lgpd required />
-                <span>Concordo com os Termos de Privacidade da Campanha e com o tratamento dos meus dados para fins de participação no debate.</span>
               </label>
             </div>
             <button type="submit" class="btn btn-primary">Comentar</button>

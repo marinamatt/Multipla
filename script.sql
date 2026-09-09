@@ -15,6 +15,7 @@
 --      update public.profiles set is_admin = true where email = 'seu-email@dominio.gov.br';
 -- 4. Rode sql/cau-sc-ativos.sql para carregar a lista oficial de registros CAU/SC.
 -- 5. Se publicar der "permission denied for table profiles", rode sql/fix-posts-insert-cau.sql.
+-- 6. Para gravar o aceite da LGPD no perfil, rode sql/lgpd-consent-profile.sql.
 -- =============================================================================
 
 create extension if not exists "pgcrypto";
@@ -39,6 +40,8 @@ create table if not exists public.profiles (
   avatar_url text,
   is_admin boolean not null default false,
   cau_number text,
+  lgpd_consent boolean not null default false,
+  lgpd_consent_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -102,6 +105,8 @@ create table if not exists public.consents (
 
 -- cau_number: registro CAU validado (A + números + DV módulo 11). Sem UPDATE direto.
 alter table public.profiles add column if not exists cau_number text;
+alter table public.profiles add column if not exists lgpd_consent boolean not null default false;
+alter table public.profiles add column if not exists lgpd_consent_at timestamptz;
 create unique index if not exists profiles_cau_number_unique
   on public.profiles (cau_number)
   where cau_number is not null;
@@ -157,14 +162,16 @@ returns table (
   email text,
   avatar_url text,
   is_admin boolean,
-  cau_number text
+  cau_number text,
+  lgpd_consent boolean,
+  lgpd_consent_at timestamptz
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select p.id, p.full_name, p.email, p.avatar_url, p.is_admin, p.cau_number
+  select p.id, p.full_name, p.email, p.avatar_url, p.is_admin, p.cau_number, p.lgpd_consent, p.lgpd_consent_at
   from public.profiles p
   where p.id = (select auth.uid());
 $$;
@@ -240,10 +247,12 @@ begin
     raise exception 'registro CAU invalido: numero nao consta na relacao de ativos do CAU/SC';
   end if;
 
-  insert into public.profiles (id, cau_number)
-  values (v_uid, v_norm)
+  insert into public.profiles (id, cau_number, lgpd_consent, lgpd_consent_at)
+  values (v_uid, v_norm, true, now())
   on conflict (id) do update
-    set cau_number = excluded.cau_number;
+    set cau_number = excluded.cau_number,
+        lgpd_consent = true,
+        lgpd_consent_at = coalesce(public.profiles.lgpd_consent_at, now());
 
   if not exists (
     select 1 from public.profiles where id = v_uid and cau_number = v_norm
@@ -283,6 +292,26 @@ $$;
 
 revoke all on function public.current_user_has_valid_cau() from public;
 grant execute on function public.current_user_has_valid_cau() to authenticated;
+
+create or replace function public.current_user_has_lgpd_consent()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (
+      select p.lgpd_consent
+      from public.profiles p
+      where p.id = (select auth.uid())
+    ),
+    false
+  );
+$$;
+
+revoke all on function public.current_user_has_lgpd_consent() from public;
+grant execute on function public.current_user_has_lgpd_consent() to authenticated;
 
 -- -----------------------------------------------------------------------------
 -- Triggers: preencher user_id pelo JWT (auditoria) e sincronizar contadores
@@ -578,6 +607,7 @@ create policy posts_insert_own
     (select auth.uid()) = user_id
     and lgpd_consent = true
     and public.current_user_has_valid_cau()
+    and public.current_user_has_lgpd_consent()
   );
 
 drop policy if exists posts_delete_own_or_admin on public.posts;
@@ -681,6 +711,12 @@ begin
   insert into public.consents (user_id, purpose)
   values ((select auth.uid()), 'participacao_debate')
   on conflict (user_id, purpose) do nothing;
+
+  update public.profiles
+  set
+    lgpd_consent = true,
+    lgpd_consent_at = coalesce(lgpd_consent_at, now())
+  where id = (select auth.uid());
 end;
 $$;
 

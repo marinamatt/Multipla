@@ -49,6 +49,7 @@ const els = {
   cauDialog: document.getElementById('cau-dialog'),
   cauForm: document.getElementById('cau-form'),
   cauFeedback: document.getElementById('cau-feedback'),
+  lgpdPolicyDialog: document.getElementById('lgpd-policy-dialog'),
   composeLock: document.getElementById('compose-lock'),
   moderationAlert: document.getElementById('moderation-alert'),
 };
@@ -68,6 +69,19 @@ function hasCauNumber() {
   return Boolean(String(state.profile?.cau_number || '').trim());
 }
 
+function lgpdConsentTracked() {
+  return Boolean(state.profile) && Object.prototype.hasOwnProperty.call(state.profile, 'lgpd_consent');
+}
+
+function hasLgpdConsent() {
+  if (!lgpdConsentTracked()) return true;
+  return Boolean(state.profile.lgpd_consent);
+}
+
+function needsCauRegistration() {
+  return Boolean(state.user) && (!hasCauNumber() || !hasLgpdConsent());
+}
+
 function formatCauInput(value) {
   return String(value || '')
     .toUpperCase()
@@ -75,7 +89,7 @@ function formatCauInput(value) {
 }
 
 function syncComposeLock() {
-  const locked = Boolean(state.user) && !hasCauNumber();
+  const locked = needsCauRegistration();
   const form = els.postForm;
   if (!form) return;
   form.querySelectorAll('textarea, select, input, button[type="submit"]').forEach((el) => {
@@ -85,17 +99,37 @@ function syncComposeLock() {
   els.composeLock?.classList.toggle('hidden', !locked);
 }
 
+function syncCauFormFromProfile() {
+  const cauInput = document.getElementById('cau-number');
+  const lgpd = document.getElementById('cau-lgpd');
+  if (cauInput && hasCauNumber() && !String(cauInput.value || '').trim()) {
+    cauInput.value = formatCauInput(state.profile.cau_number);
+  }
+  if (lgpd) lgpd.checked = lgpdConsentTracked() && Boolean(state.profile.lgpd_consent);
+}
+
 function openCauModal() {
   if (!els.cauDialog) return;
   showFeedback(els.cauFeedback, '');
+  syncCauFormFromProfile();
   if (!els.cauDialog.open) els.cauDialog.showModal();
   document.getElementById('cau-number')?.focus();
+}
+
+function openLgpdPolicyDialog(event) {
+  event?.preventDefault();
+  event?.stopPropagation();
+  if (!els.lgpdPolicyDialog) {
+    window.open('./privacidade.html', '_blank', 'noopener,noreferrer');
+    return;
+  }
+  if (!els.lgpdPolicyDialog.open) els.lgpdPolicyDialog.showModal();
 }
 
 function maybePromptCau() {
   syncComposeLock();
   if (cauSaveInFlight) return;
-  if (!state.user || hasCauNumber()) {
+  if (!needsCauRegistration()) {
     if (els.cauDialog?.open) els.cauDialog.close();
     return;
   }
@@ -154,6 +188,9 @@ async function rpcComTimeout(fn, ms = 12000) {
 }
 
 async function persistCauNumber(cau) {
+  // CAU + LGPD entram em profiles via set_cau_number (SECURITY DEFINER).
+  // Não usamos .from('profiles').update() — isso exigiria GRANT amplo e poderia
+  // expor is_admin ou pular a validação na lista oficial de ativos.
   let rpc;
   try {
     rpc = await rpcComTimeout(() => state.supabase.rpc('set_cau_number', { p_cau: cau }));
@@ -181,6 +218,16 @@ async function submitCau(event) {
     return;
   }
 
+  const lgpd = document.getElementById('cau-lgpd');
+  if (!lgpd?.checked) {
+    showFeedback(
+      els.cauFeedback,
+      'Você precisa aceitar os termos da LGPD para registrar seu CAU e publicar',
+      true,
+    );
+    return;
+  }
+
   if (!validarRegistroCAU(cau)) {
     showFeedback(els.cauFeedback, mensagemErroRegistroCAU(cau), true);
     return;
@@ -191,9 +238,15 @@ async function submitCau(event) {
   showFeedback(els.cauFeedback, 'Validando e salvando…');
   try {
     const saved = await persistCauNumber(canonicalCau(cau) || cau);
-    state.profile = { ...(state.profile || {}), cau_number: saved.cau_number || canonicalCau(cau) || cau };
+    state.profile = {
+      ...(state.profile || {}),
+      cau_number: saved.cau_number || canonicalCau(cau) || cau,
+      lgpd_consent: true,
+      lgpd_consent_at: state.profile?.lgpd_consent_at || new Date().toISOString(),
+    };
     showFeedback(els.cauFeedback, 'Registro do CAU validado e salvo.');
     announce('Registro do CAU validado.');
+    await loadProfile().catch(() => {});
     try {
       els.cauDialog?.close();
     } catch {
@@ -686,13 +739,9 @@ async function submitPost(event) {
   event.preventDefault();
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
-  if (!hasCauNumber()) {
-    showFeedback(els.postFeedback, 'Informe e valide o seu registro do CAU para publicar.', true);
+  if (!hasCauNumber() || !hasLgpdConsent()) {
+    showFeedback(els.postFeedback, 'Informe o registro do CAU e aceite os termos da LGPD para publicar.', true);
     openCauModal();
-    return;
-  }
-  if (!document.getElementById('post-lgpd').checked) {
-    showFeedback(els.postFeedback, 'É necessário aceitar os Termos de Privacidade.', true);
     return;
   }
   const content = document.getElementById('post-content').value.trim();
@@ -721,7 +770,7 @@ async function submitPost(event) {
   });
   if (error) {
     showFeedback(els.postFeedback, mensagemErroPublicar(error.message), true);
-    if (/row-level security|rls/i.test(error.message) || !hasCauNumber()) {
+    if (/row-level security|rls/i.test(error.message) || needsCauRegistration()) {
       openCauModal();
     }
     return;
@@ -741,11 +790,6 @@ async function submitComment(event, postId, card) {
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
   const feedback = card.querySelector('[data-comment-feedback]');
-  const lgpd = form.querySelector('[data-comment-lgpd]');
-  if (!lgpd.checked) {
-    showFeedback(feedback, 'É necessário aceitar os Termos de Privacidade.', true);
-    return;
-  }
   const content = form.querySelector('[data-comment-input]').value.trim();
   const limitesComentario = { min: MIN_CHARS, max: MAX_CHARS_COMENTARIO };
   if (motivoRetencao(content, limitesComentario)) {
@@ -905,6 +949,8 @@ function bindStaticEvents() {
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
+  document.getElementById('lgpd-policy-link')?.addEventListener('click', openLgpdPolicyDialog);
+  document.getElementById('lgpd-policy-close')?.addEventListener('click', () => els.lgpdPolicyDialog?.close());
   document.getElementById('moderation-alert-close')?.addEventListener('click', hideModerationAlert);
   document.getElementById('cau-number')?.addEventListener('input', (event) => {
     const caret = event.target.selectionStart;

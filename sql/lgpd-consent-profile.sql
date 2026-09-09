@@ -1,58 +1,9 @@
 -- Incremental: rode no SQL Editor (pode executar de novo).
--- Validação do CAU/SC por pesquisa na relação oficial de ativos (não usa Módulo 11).
--- Depois rode também sql/cau-sc-ativos.sql para carregar a lista.
+-- Aceite da LGPD no perfil (cadastro do CAU), sem UPDATE amplo em profiles.
+-- Também atualiza current_profile() para o checkbox voltar marcado.
 
-alter table public.profiles add column if not exists cau_number text;
 alter table public.profiles add column if not exists lgpd_consent boolean not null default false;
 alter table public.profiles add column if not exists lgpd_consent_at timestamptz;
-
-create unique index if not exists profiles_cau_number_unique
-  on public.profiles (cau_number)
-  where cau_number is not null;
-
-create table if not exists public.cau_sc_ativos (
-  code text primary key
-);
-
-create or replace function public.normalize_cau_number(p_cau text)
-returns text
-language plpgsql
-immutable
-as $$
-declare
-  v text;
-begin
-  v := upper(regexp_replace(btrim(coalesce(p_cau, '')), '[.\s\-]+', '', 'g'));
-  v := regexp_replace(v, '^0+', '');
-  if v is null or v = '' then
-    return null;
-  end if;
-  if v ~ '^[0-9]+$' then
-    v := 'A' || v;
-  end if;
-  if v !~ '^A[0-9]+$' then
-    return null;
-  end if;
-  return lpad(v, 10, '0');
-end;
-$$;
-
-drop function if exists public.cau_digit_modulo11(text);
-drop function if exists public.cau_digit_modulo11_ltr(text);
-
-create or replace function public.cau_number_is_valid(p_cau text)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.cau_sc_ativos a
-    where a.code = public.normalize_cau_number(p_cau)
-  );
-$$;
 
 create or replace function public.set_cau_number(p_cau text)
 returns text
@@ -93,11 +44,7 @@ exception
 end;
 $$;
 
-revoke all on table public.cau_sc_ativos from public, anon, authenticated;
-revoke all on function public.normalize_cau_number(text) from public;
-revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
-grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
 
 drop function if exists public.current_profile();
@@ -125,26 +72,6 @@ $$;
 revoke all on function public.current_profile() from public;
 grant execute on function public.current_profile() to authenticated;
 
-create or replace function public.current_user_has_valid_cau()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1
-    from public.profiles p
-    where p.id = (select auth.uid())
-      and p.cau_number is not null
-      and btrim(p.cau_number) <> ''
-      and public.cau_number_is_valid(p.cau_number)
-  );
-$$;
-
-revoke all on function public.current_user_has_valid_cau() from public;
-grant execute on function public.current_user_has_valid_cau() to authenticated;
-
 create or replace function public.current_user_has_lgpd_consent()
 returns boolean
 language sql
@@ -165,18 +92,30 @@ $$;
 revoke all on function public.current_user_has_lgpd_consent() from public;
 grant execute on function public.current_user_has_lgpd_consent() to authenticated;
 
-grant update (cau_number) on public.profiles to authenticated;
+create or replace function public.record_consent()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (select auth.uid()) is null then
+    return;
+  end if;
+  insert into public.consents (user_id, purpose)
+  values ((select auth.uid()), 'participacao_debate')
+  on conflict (user_id, purpose) do nothing;
 
-drop policy if exists profiles_update_own_cau on public.profiles;
-create policy profiles_update_own_cau
-  on public.profiles
-  for update
-  to authenticated
-  using (id = (select auth.uid()))
-  with check (
-    id = (select auth.uid())
-    and public.cau_number_is_valid(cau_number)
-  );
+  update public.profiles
+  set
+    lgpd_consent = true,
+    lgpd_consent_at = coalesce(lgpd_consent_at, now())
+  where id = (select auth.uid());
+end;
+$$;
+
+revoke all on function public.record_consent() from public;
+grant execute on function public.record_consent() to authenticated;
 
 drop policy if exists posts_insert_own on public.posts;
 create policy posts_insert_own
