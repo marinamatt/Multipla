@@ -602,8 +602,8 @@ dialog.liquid-card .lede {
 }
 
 dialog.policy-sheet {
-  max-width: min(40rem, calc(100% - 2rem));
-  max-height: min(40rem, calc(100% - 2.5rem));
+  max-width: min(42rem, calc(100% - 2rem));
+  max-height: min(44rem, calc(100vh - 2.5rem));
   overflow: auto;
 }
 
