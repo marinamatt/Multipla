@@ -17,6 +17,7 @@ const state = {
   commentsByPost: new Map(),
   filterType: 'todos',
   sort: 'recentes',
+  topicFilter: null,
 };
 
 const els = {
@@ -35,6 +36,8 @@ const els = {
   confirmDialog: document.getElementById('confirm-dialog'),
   reportDialog: document.getElementById('report-dialog'),
   cardTemplate: document.getElementById('post-card-template'),
+  trendingList: document.getElementById('trending-topics-list'),
+  clearTopic: document.getElementById('clear-topic'),
 };
 
 function announce(message) {
@@ -220,8 +223,61 @@ async function loadPosts() {
     els.feedEmpty.classList.remove('hidden');
     return;
   }
-  state.posts = data || [];
+  let posts = data || [];
+  if (state.topicFilter) {
+    const topic = state.topicFilter;
+    const { data: comments } = await state.supabase.from('comments_feed').select('post_id, content');
+    const postIds = new Set(
+      (comments || []).filter((row) => hasHashtag(row.content, topic)).map((row) => row.post_id),
+    );
+    posts = posts.filter((post) => hasHashtag(post.content, topic) || postIds.has(post.id));
+  }
+  state.posts = posts;
   renderFeed();
+  syncTopicButtons();
+}
+
+function hasHashtag(text, topic) {
+  const safe = topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`#${safe}(?![A-Za-z0-9_À-ÿ])`, 'i').test(String(text || ''));
+}
+
+function syncTopicButtons() {
+  if (!els.trendingList) return;
+  els.trendingList.querySelectorAll('[data-topic]').forEach((btn) => {
+    btn.classList.toggle('is-active', btn.getAttribute('data-topic') === state.topicFilter);
+  });
+  if (els.clearTopic) {
+    els.clearTopic.classList.toggle('hidden', !state.topicFilter);
+  }
+}
+
+async function loadTrendingTopics() {
+  const container = els.trendingList;
+  if (!container || !state.supabase) return;
+
+  const { data, error } = await state.supabase.rpc('get_trending_topics');
+  if (error || !data || data.length === 0) {
+    container.innerHTML = `<span class="meta">Nenhum tópico em alta no momento. Use hashtags como #ATHIS nas mensagens.</span>`;
+    return;
+  }
+
+  container.innerHTML = data
+    .map(
+      (item) => `
+      <button type="button" class="topic-chip" data-topic="${escapeHtml(item.topic)}">
+        <span>#${escapeHtml(item.topic)}</span>
+        <span class="topic-count">${item.total}</span>
+      </button>
+    `,
+    )
+    .join('');
+  syncTopicButtons();
+}
+
+function filterByTopic(topic) {
+  state.topicFilter = state.topicFilter === topic ? null : topic;
+  loadPosts();
 }
 
 async function loadComments(postId) {
@@ -458,6 +514,7 @@ async function submitPost(event) {
   showFeedback(els.postFeedback, 'Publicação enviada.');
   announce('Publicação enviada.');
   await loadPosts();
+  await loadTrendingTopics();
 }
 
 async function submitComment(event, postId, card) {
@@ -493,6 +550,7 @@ async function submitComment(event, postId, card) {
   showFeedback(feedback, 'Comentário publicado.');
   await renderComments(postId, card);
   await loadPosts();
+  await loadTrendingTopics();
 }
 
 async function deletePost(postId, asAdmin) {
@@ -510,6 +568,7 @@ async function deletePost(postId, asAdmin) {
   }
   announce('Publicação excluída.');
   await loadPosts();
+  await loadTrendingTopics();
 }
 
 async function deleteComment(commentId, postId, card) {
@@ -522,6 +581,7 @@ async function deleteComment(commentId, postId, card) {
   }
   await renderComments(postId, card);
   await loadPosts();
+  await loadTrendingTopics();
 }
 
 async function hideComment(commentId, currentlyHidden, postId, card) {
@@ -599,6 +659,7 @@ async function onAuthChange(session) {
   renderAuth();
   await loadPosts();
   await loadReports();
+  await loadTrendingTopics();
 }
 
 function bindStaticEvents() {
@@ -624,6 +685,14 @@ function bindStaticEvents() {
     const btn = event.target.closest('[data-review-report]');
     if (btn) reviewReport(btn.getAttribute('data-review-report'));
   });
+  els.trendingList?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-topic]');
+    if (btn) filterByTopic(btn.getAttribute('data-topic'));
+  });
+  els.clearTopic?.addEventListener('click', () => {
+    state.topicFilter = null;
+    loadPosts();
+  });
 }
 
 async function init() {
@@ -634,6 +703,9 @@ async function init() {
     renderAuth();
     els.feedEmpty.classList.remove('hidden');
     els.feedEmpty.textContent = 'O feed aparece quando o projeto Supabase estiver ligado a este site.';
+    if (els.trendingList) {
+      els.trendingList.innerHTML = `<span class="meta">Tópicos em alta aparecem após ligar o Supabase.</span>`;
+    }
     return;
   }
 

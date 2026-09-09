@@ -187,6 +187,61 @@ body.app-body::before {
   color: #c94a4a;
 }
 
+.trending-card:hover {
+  transform: none;
+}
+
+.trending-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b21a8;
+}
+
+.topic-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.topic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #6b21a8;
+  background: rgba(138, 43, 226, 0.1);
+  border: 1px solid rgba(138, 43, 226, 0.2);
+}
+
+.topic-chip:hover,
+.topic-chip.is-active {
+  background: rgba(138, 43, 226, 0.2);
+}
+
+.topic-count {
+  border-radius: 999px;
+  background: rgba(138, 43, 226, 0.18);
+  color: #5b21b6;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.hashtag-hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .compose-bar {
   position: sticky;
   top: var(--header-h);
@@ -441,8 +496,9 @@ dialog {
   margin: auto;
 }
 
-dialog.liquid-card {
-  padding: 2rem 1.85rem 1.75rem;
+dialog.liquid-card,
+dialog.dialog-sheet {
+  padding: 2rem 1.85rem 1.75rem !important;
   box-sizing: border-box;
 }
 

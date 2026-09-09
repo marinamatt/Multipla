@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Chapa Múltipla CAU/SC — debate público e temporário. Ideias, reclamações e apoios com privacidade (LGPD)."
+      content="Chapa Múltipla CAU/SC — debate público: Ideias, reclamações e apoios com privacidade (LGPD)."
     />
     <title>Chapa Múltipla CAU/SC</title>
     <link rel="icon" type="image/png" href="./assets/favicon.png" />
@@ -73,7 +73,7 @@
               maxlength="2000"
               rows="2"
               required
-              placeholder="Escreva uma ideia ou reclamação para o debate…"
+              placeholder="Escreva uma ideia ou reclamação. Use hashtags, ex: #ATHIS #Fiscalização"
               class="glass-textarea"
             ></textarea>
 
@@ -104,6 +104,9 @@
               </label>
             </div>
             <p id="post-feedback" class="meta" style="grid-column: 1 / -1" role="status"></p>
+            <p class="hashtag-hint" style="grid-column: 1 / -1">
+              Use hashtags nas suas mensagens (ex: #ATHIS, #Fiscalização, #TabelaDeHonorários, #JovensArquitetos) para incluir seu post nos Tópicos em Alta.
+            </p>
           </form>
         </div>
       </section>
@@ -113,9 +116,7 @@
           <div>
             <h1 class="title-xl">Mesa de debate</h1>
             <p class="lede">
-              A construção do CAU/SC começa com a sua voz. Queremos um conselho próximo, transparente, público e
-              democrático. O Múltiplas é a sua plataforma aberta para enviar sugestões, expor os desafios da categoria e
-              debater propostas para o futuro da nossa profissão e das nossas cidades.
+              A construção do CAU/SC começa com a sua voz. Queremos um conselho próximo, transparente, público e democrático. O Múltiplas é a sua plataforma aberta para enviar sugestões, expor os desafios da categoria e debater propostas para o futuro da nossa profissão e das nossas cidades.
             </p>
           </div>
           <div class="flex flex-wrap gap-2" role="group" aria-label="Filtros do feed">
@@ -149,6 +150,18 @@
           <div id="reports-list" class="feed-grid"></div>
         </section>
 
+        <section class="liquid-card trending-card p-5 mb-6" aria-labelledby="trending-title">
+          <p class="trending-kicker">Em alta na categoria</p>
+          <h2 id="trending-title" class="card-title">Tópicos mais comentados</h2>
+          <p class="hashtag-hint">
+            Use hashtags nas suas mensagens (ex: #ATHIS, #Fiscalização, #TabelaDeHonorários, #JovensArquitetos) para incluir seu post nos Tópicos em Alta.
+          </p>
+          <div id="trending-topics-list" class="topic-list">
+            <span class="meta">Carregando tópicos…</span>
+          </div>
+          <button type="button" id="clear-topic" class="btn-text hidden" style="margin-top: 0.75rem">Ver todos os tópicos</button>
+        </section>
+
         <section aria-labelledby="feed-title">
           <h2 id="feed-title" class="sr-only">Publicações</h2>
           <div id="feed" class="feed-grid"></div>
@@ -160,11 +173,8 @@
 
       <footer class="site-footer">
         <div class="wrap flex flex-col gap-2 sm:flex-row sm:justify-between">
-          <p>Campanha Chapa Multipla Número 3 - Conselho de Arquitetura e Urbanismo. Dados tratados conforme a LGPD (Lei 13.709/2018).</p>
-          <p>
-            <a href="./privacidade.html">Privacidade</a>
-            · Direito de eliminação no próprio card ou pelo menu da conta.
-          </p>
+          <p>Campanha Chapa Múltipla Número 3 — Conselho de Arquitetura e Urbanismo. Dados tratados conforme a LGPD (Lei 13.709/2018).</p>
+          <p><a href="./privacidade.html">Privacidade</a> · Direito de eliminação no próprio card ou pelo menu da conta.</p>
         </div>
       </footer>
     </div>
