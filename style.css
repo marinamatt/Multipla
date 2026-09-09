@@ -104,7 +104,7 @@ body.app-body::before {
 
 .header-inner {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.85rem;
   min-height: var(--header-h);
@@ -117,14 +117,43 @@ body.app-body::before {
   gap: 0.75rem;
   text-decoration: none;
   color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .brand-logo {
   display: block;
   height: 56px;
   width: auto;
-  max-width: min(340px, 70vw);
+  max-width: min(280px, 36vw);
   object-fit: contain;
+}
+
+.header-search {
+  flex: 1;
+  min-width: 0;
+  max-width: 28rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.search-toggle:hover {
+  background: rgba(255, 255, 255, 0.62);
 }
 
 .auth-slot {
@@ -132,6 +161,7 @@ body.app-body::before {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-shrink: 0;
 }
 
 .liquid-card {
@@ -247,6 +277,27 @@ body.app-body::before {
   top: var(--header-h);
   z-index: 30;
   padding: 0.85rem 0 0;
+  transition: padding 0.35s ease;
+}
+
+.compose-bar.is-collapsed {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#idea-box {
+  transform-origin: top center;
+  transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.4s ease, margin 0.35s ease;
+  max-height: 36rem;
+}
+
+#idea-box.hidden-scroll {
+  opacity: 0;
+  transform: scale(0.94);
+  max-height: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .compose-shell {
@@ -459,7 +510,20 @@ body.app-body::before {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.55rem 0.75rem 0.55rem 0.95rem;
+  width: 100%;
+  padding: 0.45rem 0.7rem 0.45rem 0.85rem;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
+    0 6px 20px 0 rgba(31, 38, 135, 0.06);
+}
+
+.header-search .search-shell.liquid-card:focus-within {
+  outline: none;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 0 2px rgba(63, 94, 251, 0.28);
 }
 
 .search-shell:hover,
@@ -509,10 +573,14 @@ body.app-body::before {
 }
 
 .search-status {
-  min-height: 1.25rem;
-  margin: 0.55rem 0 0;
+  min-height: 0;
+  margin: 0 0 1rem;
   color: var(--text-muted);
   font-size: 0.88rem;
+}
+
+.search-status:empty {
+  display: none;
 }
 
 .feed-search-empty {
@@ -725,6 +793,93 @@ dialog::backdrop {
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
+}
+
+.fab-new-post {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.35rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.65rem;
+  height: 3.65rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.46);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  color: #2d5bff;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    0 14px 36px rgba(45, 91, 255, 0.32);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.84) translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+}
+
+.fab-new-post.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+.fab-new-post.is-visible:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 767px) {
+  .brand-logo {
+    height: 40px;
+    max-width: min(148px, 38vw);
+  }
+
+  .search-toggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .header-search {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+
+  .header-search .search-shell {
+    position: fixed;
+    top: calc(var(--header-h) + 0.4rem);
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    max-width: none;
+    z-index: 45;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  }
+
+  .header-search.is-open .search-shell {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .header-search.is-open .search-toggle {
+    background: rgba(45, 91, 255, 0.16);
+    color: #2d5bff;
+  }
+
+  .header-inner {
+    position: relative;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

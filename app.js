@@ -59,6 +59,10 @@ const els = {
   cauFeedback: document.getElementById('cau-feedback'),
   lgpdPolicyDialog: document.getElementById('lgpd-policy-dialog'),
   composeLock: document.getElementById('compose-lock'),
+  ideaBox: document.getElementById('idea-box'),
+  fabNewPost: document.getElementById('fab-new-post'),
+  headerSearch: document.getElementById('header-search'),
+  searchToggle: document.getElementById('search-toggle'),
   moderationAlert: document.getElementById('moderation-alert'),
 };
 
@@ -66,6 +70,8 @@ let cauPromptShown = false;
 let cauSaveInFlight = false;
 let searchDebounce = null;
 let searchSeq = 0;
+let composeCollapsed = false;
+let scrollTick = 0;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -361,6 +367,7 @@ function renderAuth() {
     document.getElementById('btn-login')?.addEventListener('click', openLogin);
     els.composeBar.classList.add('hidden');
     syncComposeLock();
+    syncComposeOnScroll();
     return;
   }
 
@@ -392,6 +399,7 @@ function renderAuth() {
   document.getElementById('btn-delete-mine')?.addEventListener('click', deleteMyContributions);
   els.composeBar.classList.remove('hidden');
   syncComposeLock();
+  syncComposeOnScroll();
 }
 
 function escapeHtml(value) {
@@ -645,13 +653,57 @@ function focusComposeToCreate() {
     openLogin();
     return;
   }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  composeCollapsed = false;
+  syncComposeOnScroll();
   if (needsCauRegistration()) {
     openCauModal();
     return;
   }
-  els.composeBar?.classList.remove('hidden');
-  els.composeBar?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  document.getElementById('post-content')?.focus();
+  window.setTimeout(() => {
+    document.getElementById('post-content')?.focus();
+  }, 280);
+}
+
+function syncComposeOnScroll() {
+  const ideaBox = els.ideaBox;
+  const fabButton = els.fabNewPost;
+  const canCompose = Boolean(els.composeBar) && !els.composeBar.classList.contains('hidden');
+  const y = window.scrollY;
+
+  if (!canCompose) {
+    composeCollapsed = false;
+    ideaBox?.classList.remove('hidden-scroll');
+    els.composeBar?.classList.remove('is-collapsed');
+    fabButton?.classList.remove('is-visible');
+    return;
+  }
+
+  if (!composeCollapsed && y > 150) composeCollapsed = true;
+  else if (composeCollapsed && y < 50) composeCollapsed = false;
+
+  ideaBox?.classList.toggle('hidden-scroll', composeCollapsed);
+  els.composeBar?.classList.toggle('is-collapsed', composeCollapsed);
+  fabButton?.classList.toggle('is-visible', composeCollapsed);
+}
+
+function onWindowScroll() {
+  if (scrollTick) return;
+  scrollTick = window.requestAnimationFrame(() => {
+    scrollTick = 0;
+    syncComposeOnScroll();
+  });
+}
+
+function setHeaderSearchOpen(open) {
+  els.headerSearch?.classList.toggle('is-open', open);
+  els.searchToggle?.setAttribute('aria-expanded', String(open));
+  if (open) els.feedSearch?.focus();
+}
+
+function toggleHeaderSearch() {
+  const open = !els.headerSearch?.classList.contains('is-open');
+  setHeaderSearchOpen(open);
 }
 
 function hasHashtag(text, topic) {
@@ -1111,10 +1163,27 @@ function bindStaticEvents() {
   els.searchForm?.addEventListener('submit', onSearchSubmit);
   els.feedSearch?.addEventListener('input', onSearchInput);
   els.feedSearch?.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') clearSearch();
+    if (event.key === 'Escape') {
+      if (els.headerSearch?.classList.contains('is-open')) {
+        setHeaderSearchOpen(false);
+        return;
+      }
+      clearSearch();
+    }
   });
   els.searchClear?.addEventListener('click', clearSearch);
   els.searchCreate?.addEventListener('click', focusComposeToCreate);
+  els.searchToggle?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleHeaderSearch();
+  });
+  els.fabNewPost?.addEventListener('click', focusComposeToCreate);
+  window.addEventListener('scroll', onWindowScroll, { passive: true });
+  document.addEventListener('click', (event) => {
+    if (!els.headerSearch?.classList.contains('is-open')) return;
+    if (els.headerSearch.contains(event.target)) return;
+    setHeaderSearchOpen(false);
+  });
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
