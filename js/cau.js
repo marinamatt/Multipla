@@ -16,6 +16,29 @@ export function canonicalCau(cau) {
   return value.padStart(10, '0');
 }
 
+/** Exibe o DV com traço (A765432-1), mesmo se a pessoa não o digitar. Não completa zeros. */
+export function formatCauInput(value) {
+  const raw = String(value || '')
+    .toUpperCase()
+    .replace(/[^A0-9]/g, '');
+  if (!raw) return '';
+
+  const match = raw.match(/^(0*)A(\d*)$/);
+  if (match) {
+    const zeros = match[1];
+    const digits = match[2];
+    if (digits.length >= 2) {
+      return `${zeros}A${digits.slice(0, -1)}-${digits.slice(-1)}`;
+    }
+    return `${zeros}A${digits}`;
+  }
+
+  if (/^\d+$/.test(raw) && raw.length >= 2) {
+    return `${raw.slice(0, -1)}-${raw.slice(-1)}`;
+  }
+  return raw;
+}
+
 export function validarRegistroCAU(cau) {
   const code = canonicalCau(cau);
   return Boolean(code) && CAU_SC_ATIVOS.has(code);

@@ -1,6 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY, authRedirectTo } from './js/config.js';
-import { canonicalCau, validarRegistroCAU, mensagemErroRegistroCAU } from './js/cau.js';
+import { canonicalCau, validarRegistroCAU, mensagemErroRegistroCAU, formatCauInput } from './js/cau.js';
 import {
   MENSAGEM_CONTEUDO_RETIDO,
   MIN_CHARS,
@@ -90,12 +90,6 @@ function hasLgpdConsent() {
 
 function needsCauRegistration() {
   return Boolean(state.user) && (!hasCauNumber() || !hasLgpdConsent());
-}
-
-function formatCauInput(value) {
-  return String(value || '')
-    .toUpperCase()
-    .replace(/[^A0-9\-]/g, '');
 }
 
 function syncComposeLock() {
@@ -1133,8 +1127,12 @@ function bindStaticEvents() {
     event.target.value = formatCauInput(event.target.value);
     if (typeof caret === 'number') {
       const delta = event.target.value.length - before.length;
-      event.target.setSelectionRange(caret + delta, caret + delta);
+      const next = Math.max(0, Math.min(event.target.value.length, caret + delta));
+      event.target.setSelectionRange(next, next);
     }
+  });
+  document.getElementById('cau-number')?.addEventListener('blur', (event) => {
+    event.target.value = formatCauInput(event.target.value);
   });
   els.loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
