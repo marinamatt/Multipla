@@ -21,7 +21,7 @@ begin
 
   v_norm := public.normalize_cau_number(p_cau);
   if v_norm is null or not public.cau_number_is_valid(v_norm) then
-    raise exception 'registro CAU invalido: numero nao consta na relacao de ativos do CAU/SC';
+    raise exception 'registro CAU inválido';
   end if;
 
   insert into public.profiles (id, cau_number, lgpd_consent, lgpd_consent_at)

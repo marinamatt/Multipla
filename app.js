@@ -169,8 +169,8 @@ function mensagemErroSalvarCau(raw, cau) {
   if (/PGRST202|schema cache|Could not find the function/i.test(text)) {
     return 'A lista de registros CAU/SC ainda não está no banco. Execute sql/cau-number.sql e sql/cau-sc-ativos.sql no SQL Editor do Supabase.';
   }
-  if (/invalido/i.test(text) || /check constraint/i.test(text)) {
-    return mensagemErroRegistroCAU(cau);
+  if (/invalido|inválido|nao consta|não consta/i.test(text) || /check constraint/i.test(text)) {
+    return 'registro CAU inválido';
   }
   if (/autenticacao obrigatoria/i.test(text)) {
     return 'Sua sessão expirou. Entre novamente com o Google e tente salvar o CAU.';

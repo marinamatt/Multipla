@@ -53,7 +53,7 @@ export function mensagemErroRegistroCAU(cau) {
     return 'Use o número do CAU com a letra A e os dígitos (ex.: A765432-1 ou 00A7654321).';
   }
   if (!validarRegistroCAU(raw)) {
-    return 'Este número não consta na relação de profissionais ativos do CAU/SC. Confira no SICCAU ou no seu cartão.';
+    return 'registro CAU inválido';
   }
   return '';
 }
