@@ -70,8 +70,7 @@ let cauPromptShown = false;
 let cauSaveInFlight = false;
 let searchDebounce = null;
 let searchSeq = 0;
-let composeCollapsed = false;
-let scrollTick = 0;
+let composeObserver = null;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -367,7 +366,7 @@ function renderAuth() {
     document.getElementById('btn-login')?.addEventListener('click', openLogin);
     els.composeBar.classList.add('hidden');
     syncComposeLock();
-    syncComposeOnScroll();
+    refreshComposeFab();
     return;
   }
 
@@ -399,7 +398,7 @@ function renderAuth() {
   document.getElementById('btn-delete-mine')?.addEventListener('click', deleteMyContributions);
   els.composeBar.classList.remove('hidden');
   syncComposeLock();
-  syncComposeOnScroll();
+  refreshComposeFab();
 }
 
 function escapeHtml(value) {
@@ -654,8 +653,6 @@ function focusComposeToCreate() {
     return;
   }
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  composeCollapsed = false;
-  syncComposeOnScroll();
   if (needsCauRegistration()) {
     openCauModal();
     return;
@@ -665,34 +662,32 @@ function focusComposeToCreate() {
   }, 280);
 }
 
-function syncComposeOnScroll() {
-  const ideaBox = els.ideaBox;
-  const fabButton = els.fabNewPost;
+function refreshComposeFab() {
   const canCompose = Boolean(els.composeBar) && !els.composeBar.classList.contains('hidden');
-  const y = window.scrollY;
-
   if (!canCompose) {
-    composeCollapsed = false;
-    ideaBox?.classList.remove('hidden-scroll');
-    els.composeBar?.classList.remove('is-collapsed');
-    fabButton?.classList.remove('is-visible');
+    els.fabNewPost?.classList.remove('is-visible');
     return;
   }
-
-  if (!composeCollapsed && y > 150) composeCollapsed = true;
-  else if (composeCollapsed && y < 50) composeCollapsed = false;
-
-  ideaBox?.classList.toggle('hidden-scroll', composeCollapsed);
-  els.composeBar?.classList.toggle('is-collapsed', composeCollapsed);
-  fabButton?.classList.toggle('is-visible', composeCollapsed);
+  setupComposeObserver();
 }
 
-function onWindowScroll() {
-  if (scrollTick) return;
-  scrollTick = window.requestAnimationFrame(() => {
-    scrollTick = 0;
-    syncComposeOnScroll();
-  });
+function setupComposeObserver() {
+  if (composeObserver) {
+    composeObserver.disconnect();
+    composeObserver = null;
+  }
+  const box = els.ideaBox;
+  if (!box) return;
+  composeObserver = new IntersectionObserver(
+    (entries) => {
+      const canCompose = Boolean(els.composeBar) && !els.composeBar.classList.contains('hidden');
+      const entry = entries[0];
+      const inView = Boolean(entry?.isIntersecting);
+      els.fabNewPost?.classList.toggle('is-visible', canCompose && !inView);
+    },
+    { root: null, threshold: 0, rootMargin: '-8px 0px 0px 0px' },
+  );
+  composeObserver.observe(box);
 }
 
 function setHeaderSearchOpen(open) {
@@ -1178,7 +1173,7 @@ function bindStaticEvents() {
     toggleHeaderSearch();
   });
   els.fabNewPost?.addEventListener('click', focusComposeToCreate);
-  window.addEventListener('scroll', onWindowScroll, { passive: true });
+  setupComposeObserver();
   document.addEventListener('click', (event) => {
     if (!els.headerSearch?.classList.contains('is-open')) return;
     if (els.headerSearch.contains(event.target)) return;

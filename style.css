@@ -273,31 +273,7 @@ body.app-body::before {
 }
 
 .compose-bar {
-  position: sticky;
-  top: var(--header-h);
-  z-index: 30;
   padding: 0.85rem 0 0;
-  transition: padding 0.35s ease;
-}
-
-.compose-bar.is-collapsed {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-#idea-box {
-  transform-origin: top center;
-  transition: opacity 0.35s ease, transform 0.35s ease, max-height 0.4s ease, margin 0.35s ease;
-  max-height: 36rem;
-}
-
-#idea-box.hidden-scroll {
-  opacity: 0;
-  transform: scale(0.94);
-  max-height: 0;
-  margin: 0;
-  overflow: hidden;
-  pointer-events: none;
 }
 
 .compose-shell {
