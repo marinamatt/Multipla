@@ -15,7 +15,19 @@ Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. 
 2. Abra **SQL Editor** e execute o arquivo `script.sql`.
    Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta), `sql/cau-number.sql` (funções do CAU) e `sql/cau-sc-ativos.sql` (lista oficial de registros ativos do CAU/SC).
 3. **Authentication → Providers → Google**: habilite o provedor e informe Client ID / Secret do Google Cloud.
-4. **Authentication → URL Configuration**: em Redirect URLs, coloque `http://localhost:3000` e a URL de produção (Netlify/Vercel).
+4. **Authentication → URL Configuration** — use sempre HTTPS no Netlify (`http://` quebra o Google OAuth):
+   - **Site URL:** `https://fantastic-dodol-08e97f.netlify.app`
+   - **Redirect URLs** (uma por linha):
+     - `https://fantastic-dodol-08e97f.netlify.app`
+     - `https://fantastic-dodol-08e97f.netlify.app/**`
+     - `http://localhost:3000`
+     - `http://localhost:3000/**`
+
+   No Google Cloud (OAuth client):
+   - **Authorized JavaScript origins:** `https://fantastic-dodol-08e97f.netlify.app` e `http://localhost:3000`
+   - **Authorized redirect URIs:** `https://vjvvticwevkicmjfxyqa.supabase.co/auth/v1/callback`
+
+   O callback continua sendo o do Supabase; o domínio Netlify entra em *origins* e nas Redirect URLs acima.
 5. Torne um usuário administrador (depois do primeiro login):
 
 ```sql
@@ -33,6 +45,7 @@ Edite `js/config.js`:
 ```js
 export const SUPABASE_URL = 'https://xxxx.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJ...';
+export const SITE_URL = 'https://fantastic-dodol-08e97f.netlify.app';
 ```
 
 ## 3. Rodar localmente
@@ -50,7 +63,7 @@ Abra `http://localhost:3000`.
 - **Netlify**: repositório Git + `netlify.toml` (publish = raiz). Sem comando de build além do placeholder.
 - **Vercel**: projeto estático na raiz; `vercel.json` só define cabeçalhos.
 
-Adicione a URL de produção nas Redirect URLs do Supabase.
+A URL de produção já está documentada no passo 1.4. Depois de publicar, confirme as Redirect URLs no Supabase e os *Authorized JavaScript origins* no Google Cloud.
 
 ## Privacidade e segurança
 

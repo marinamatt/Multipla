@@ -4,7 +4,13 @@
 -- =============================================================================
 -- Depois de executar:
 -- 1. Authentication > Providers > Google: habilite o OAuth
--- 2. Authentication > URL Configuration: adicione a URL do site (Netlify/Vercel)
+-- 2. Authentication > URL Configuration (sempre HTTPS no Netlify):
+--    Site URL: https://fantastic-dodol-08e97f.netlify.app
+--    Redirect URLs:
+--      https://fantastic-dodol-08e97f.netlify.app
+--      https://fantastic-dodol-08e97f.netlify.app/**
+--      http://localhost:3000
+--      http://localhost:3000/**
 -- 3. Torne um perfil admin:
 --      update public.profiles set is_admin = true where email = 'seu-email@dominio.gov.br';
 -- 4. Rode sql/cau-sc-ativos.sql para carregar a lista oficial de registros CAU/SC.

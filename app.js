@@ -1,5 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './js/config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, authRedirectTo } from './js/config.js';
 import { canonicalCau, validarRegistroCAU, mensagemErroRegistroCAU } from './js/cau.js';
 import {
   MENSAGEM_CONTEUDO_RETIDO,
@@ -372,7 +372,7 @@ async function loadProfile() {
 async function signInWithGoogle() {
   const { error } = await state.supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.origin },
+    options: { redirectTo: authRedirectTo() },
   });
   if (error) {
     announce('Não foi possível iniciar o login.');
