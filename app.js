@@ -38,7 +38,13 @@ const els = {
   cardTemplate: document.getElementById('post-card-template'),
   trendingList: document.getElementById('trending-topics-list'),
   clearTopic: document.getElementById('clear-topic'),
+  cauDialog: document.getElementById('cau-dialog'),
+  cauForm: document.getElementById('cau-form'),
+  cauFeedback: document.getElementById('cau-feedback'),
+  composeLock: document.getElementById('compose-lock'),
 };
+
+let cauPromptShown = false;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -46,6 +52,124 @@ function announce(message) {
 
 function isAdmin() {
   return Boolean(state.profile?.is_admin);
+}
+
+function hasCauNumber() {
+  return Boolean(String(state.profile?.cau_number || '').trim());
+}
+
+function normalizarRegistroCAU(cau) {
+  return String(cau || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+function digitoVerificadorModulo11(digitos) {
+  const nums = String(digitos);
+  let soma = 0;
+  let peso = 2;
+  for (let i = nums.length - 1; i >= 0; i -= 1) {
+    soma += Number(nums[i]) * peso;
+    peso = peso === 9 ? 2 : peso + 1;
+  }
+  const resto = soma % 11;
+  return resto < 2 ? 0 : 11 - resto;
+}
+
+/**
+ * Valida o registro do CAU: letra A, números e dígito verificador (Módulo 11).
+ * @param {string} cau
+ * @returns {boolean}
+ */
+function validarRegistroCAU(cau) {
+  const value = normalizarRegistroCAU(cau);
+  const match = /^A(\d{5,8})-(\d)$/.exec(value);
+  if (!match) return false;
+  return digitoVerificadorModulo11(match[1]) === Number(match[2]);
+}
+
+function mensagemErroRegistroCAU(cau) {
+  const value = normalizarRegistroCAU(cau);
+  if (!value) {
+    return 'Informe o seu registro do CAU, no formato A123456-7.';
+  }
+  if (!/^A\d{5,8}-\d$/.test(value)) {
+    return 'O registro deve começar com a letra A, seguida de números e o dígito após o hífen (ex.: A123456-7).';
+  }
+  if (!validarRegistroCAU(value)) {
+    return 'O dígito verificador (número após o hífen) não confere. Confira o número no SICCAU ou no seu cartão do CAU.';
+  }
+  return '';
+}
+
+function syncComposeLock() {
+  const locked = Boolean(state.user) && !hasCauNumber();
+  const form = els.postForm;
+  if (!form) return;
+  form.querySelectorAll('textarea, select, input, button[type="submit"]').forEach((el) => {
+    el.disabled = locked;
+  });
+  form.setAttribute('aria-disabled', String(locked));
+  els.composeLock?.classList.toggle('hidden', !locked);
+}
+
+function openCauModal() {
+  if (!els.cauDialog) return;
+  showFeedback(els.cauFeedback, '');
+  if (!els.cauDialog.open) els.cauDialog.showModal();
+  document.getElementById('cau-number')?.focus();
+}
+
+function maybePromptCau() {
+  syncComposeLock();
+  if (!state.user || hasCauNumber()) {
+    if (els.cauDialog?.open) els.cauDialog.close();
+    return;
+  }
+  if (!cauPromptShown) {
+    cauPromptShown = true;
+    openCauModal();
+  }
+}
+
+async function submitCau(event) {
+  event.preventDefault();
+  const input = document.getElementById('cau-number');
+  const declaration = document.getElementById('cau-declaration');
+  const cau = normalizarRegistroCAU(input?.value);
+  if (input) input.value = cau;
+
+  if (!declaration?.checked) {
+    showFeedback(els.cauFeedback, 'Confirme a declaração de arquiteto(a) e urbanista ativo(a) em Santa Catarina.', true);
+    return;
+  }
+
+  if (!validarRegistroCAU(cau)) {
+    showFeedback(els.cauFeedback, mensagemErroRegistroCAU(cau), true);
+    return;
+  }
+
+  showFeedback(els.cauFeedback, 'Validando e salvando…');
+  const { data, error } = await state.supabase.rpc('set_cau_number', { p_cau: cau });
+  if (error) {
+    const duplicated = /vinculado a outra conta/i.test(error.message);
+    showFeedback(
+      els.cauFeedback,
+      duplicated
+        ? 'Este registro do CAU já está vinculado a outra conta.'
+        : error.message.replace('registro CAU invalido: ', '') || mensagemErroRegistroCAU(cau),
+      true,
+    );
+    return;
+  }
+
+  const saved = Array.isArray(data) ? data[0] : data;
+  state.profile = { ...(state.profile || {}), cau_number: saved || cau };
+  showFeedback(els.cauFeedback, 'Registro do CAU validado e salvo.');
+  announce('Registro do CAU validado.');
+  els.cauDialog.close();
+  syncComposeLock();
 }
 
 function formatDate(iso) {
@@ -120,6 +244,7 @@ function renderAuth() {
     `;
     document.getElementById('btn-login')?.addEventListener('click', openLogin);
     els.composeBar.classList.add('hidden');
+    syncComposeLock();
     return;
   }
 
@@ -150,6 +275,7 @@ function renderAuth() {
   document.getElementById('btn-logout')?.addEventListener('click', signOut);
   document.getElementById('btn-delete-mine')?.addEventListener('click', deleteMyContributions);
   els.composeBar.classList.remove('hidden');
+  syncComposeLock();
 }
 
 function escapeHtml(value) {
@@ -183,6 +309,7 @@ async function loadProfile() {
       full_name: state.user.user_metadata?.full_name || state.user.user_metadata?.name || 'Arquiteto(a)',
       avatar_url: state.user.user_metadata?.avatar_url || state.user.user_metadata?.picture,
       is_admin: false,
+      cau_number: null,
     };
     return;
   }
@@ -487,6 +614,11 @@ async function submitPost(event) {
     showFeedback(els.postFeedback, error.message, true);
     return;
   }
+  if (!hasCauNumber()) {
+    showFeedback(els.postFeedback, 'Informe e valide o seu registro do CAU para publicar.', true);
+    openCauModal();
+    return;
+  }
   if (!document.getElementById('post-lgpd').checked) {
     showFeedback(els.postFeedback, 'É necessário aceitar os Termos de Privacidade.', true);
     return;
@@ -651,12 +783,17 @@ async function reviewReport(id) {
 }
 
 async function onAuthChange(session) {
+  const previousId = state.user?.id;
   state.user = session?.user ?? null;
+  if (!state.user || state.user.id !== previousId) {
+    cauPromptShown = false;
+  }
   await loadProfile();
   if (state.user && localStorage.getItem('multipla_lgpd_ok') === '1') {
     await recordConsent().catch(() => {});
   }
   renderAuth();
+  maybePromptCau();
   await loadPosts();
   await loadReports();
   await loadTrendingTopics();
@@ -672,6 +809,18 @@ function bindStaticEvents() {
     loadPosts();
   });
   els.postForm.addEventListener('submit', submitPost);
+  els.cauForm?.addEventListener('submit', submitCau);
+  document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
+  document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
+  document.getElementById('cau-number')?.addEventListener('input', (event) => {
+    const caret = event.target.selectionStart;
+    const before = event.target.value;
+    event.target.value = normalizarRegistroCAU(event.target.value);
+    if (typeof caret === 'number') {
+      const delta = event.target.value.length - before.length;
+      event.target.setSelectionRange(caret + delta, caret + delta);
+    }
+  });
   els.loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!document.getElementById('login-lgpd').checked) return;

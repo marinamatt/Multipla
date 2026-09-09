@@ -249,12 +249,46 @@ body.app-body::before {
   padding: 0.85rem 0 0;
 }
 
+.compose-shell {
+  position: relative;
+}
+
 .compose-card {
   padding: 1rem 1.1rem;
 }
 
 .compose-card:hover {
   transform: none;
+}
+
+.compose-lock {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.15rem 1.25rem;
+  text-align: center;
+  border-radius: var(--card-radius);
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(18px) saturate(200%);
+  -webkit-backdrop-filter: blur(18px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.compose-lock p {
+  margin: 0;
+  max-width: 22rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.compose-lock.hidden {
+  display: none;
 }
 
 .compose-grid {
@@ -270,7 +304,8 @@ body.app-body::before {
 
 .field,
 .glass-select,
-.glass-textarea {
+.glass-textarea,
+.glass-input {
   width: 100%;
   border: 1px solid rgba(29, 29, 31, 0.08);
   background: rgba(255, 255, 255, 0.72);
@@ -283,6 +318,18 @@ body.app-body::before {
 .glass-textarea {
   resize: vertical;
   min-height: 2.75rem;
+}
+
+.glass-input {
+  letter-spacing: 0.04em;
+}
+
+.btn:disabled,
+.glass-select:disabled,
+.glass-textarea:disabled,
+.glass-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .btn {

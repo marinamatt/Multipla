@@ -59,7 +59,8 @@
 
       <section id="compose-bar" class="compose-bar hidden">
         <div class="wrap">
-          <form id="post-form" class="liquid-card compose-card compose-grid" novalidate>
+          <div class="compose-shell">
+            <form id="post-form" class="liquid-card compose-card compose-grid" novalidate>
             <label class="sr-only" for="post-type">Categoria</label>
             <select id="post-type" name="type" class="glass-select" required>
               <option value="ideia">Ideia</option>
@@ -108,6 +109,11 @@
               Use hashtags nas suas mensagens (ex: #ATHIS, #Fiscalização, #TabelaDeHonorários, #JovensArquitetos) para incluir seu post nos Tópicos em Alta.
             </p>
           </form>
+            <div id="compose-lock" class="compose-lock hidden">
+              <p>Para publicar, informe e valide o seu registro no CAU.</p>
+              <button type="button" id="btn-open-cau" class="btn btn-primary">Informar registro CAU</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -178,6 +184,40 @@
         </div>
       </footer>
     </div>
+
+    <dialog id="cau-dialog" class="liquid-card dialog-sheet" aria-labelledby="cau-title">
+      <form id="cau-form" class="space-y-4">
+        <h2 id="cau-title" class="title-xl" style="font-size: 1.6rem">Registro no CAU</h2>
+        <p class="lede">
+          Para publicar na mesa de debate, informe o seu número de registro no Conselho de Arquitetura e Urbanismo.
+          O dígito após o hífen é o verificador (Módulo 11). Exemplo de formato: A123456-7.
+        </p>
+        <label class="block text-sm" for="cau-number">
+          Número do CAU
+          <input
+            id="cau-number"
+            name="cau_number"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="12"
+            placeholder="A123456-7"
+            class="glass-input mt-1"
+            required
+          />
+        </label>
+        <label class="flex items-start gap-2 text-sm">
+          <input id="cau-declaration" type="checkbox" required class="mt-1" />
+          <span>Declaro ser arquiteto(a) e urbanista ativo(a) em Santa Catarina</span>
+        </label>
+        <p id="cau-feedback" class="meta" role="status"></p>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary">Validar e salvar</button>
+          <button type="button" id="cau-cancel" class="btn btn-ghost">Agora não</button>
+        </div>
+      </form>
+    </dialog>
 
     <dialog id="login-dialog" class="liquid-card dialog-sheet" aria-labelledby="login-title">
       <form id="login-form" class="space-y-4">
