@@ -22,10 +22,12 @@ const state = {
   user: null,
   profile: null,
   posts: [],
+  postsBase: [],
   commentsByPost: new Map(),
   filterType: 'todos',
   sort: 'recentes',
   topicFilter: null,
+  searchTerm: '',
 };
 
 const els = {
@@ -35,6 +37,12 @@ const els = {
   postFeedback: document.getElementById('post-feedback'),
   feed: document.getElementById('feed'),
   feedEmpty: document.getElementById('feed-empty'),
+  feedSearch: document.getElementById('feed-search'),
+  searchForm: document.getElementById('search-form'),
+  searchClear: document.getElementById('search-clear'),
+  searchStatus: document.getElementById('search-status'),
+  feedSearchEmpty: document.getElementById('feed-search-empty'),
+  searchCreate: document.getElementById('btn-search-create'),
   adminPanel: document.getElementById('admin-panel'),
   reportsList: document.getElementById('reports-list'),
   configBanner: document.getElementById('config-banner'),
@@ -56,6 +64,8 @@ const els = {
 
 let cauPromptShown = false;
 let cauSaveInFlight = false;
+let searchDebounce = null;
+let searchSeq = 0;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -469,8 +479,21 @@ async function recordConsent() {
 
 async function loadPosts() {
   if (!state.supabase) return;
+  const posts = await fetchFeedPosts();
+  if (!posts) return;
+  state.postsBase = posts;
+  applyLocalSearch();
+  if (state.searchTerm) await searchRemote();
+  syncTopicButtons();
+}
+
+async function fetchFeedPosts(searchTerm = '') {
   let query = state.supabase.from('posts_feed').select('*');
   if (state.filterType !== 'todos') query = query.eq('type', state.filterType);
+  const safe = sanitizeIlike(searchTerm);
+  if (safe) {
+    query = query.or(`title.ilike.%${safe}%,content.ilike.%${safe}%`);
+  }
   query =
     state.sort === 'apoios'
       ? query.order('likes_count', { ascending: false }).order('created_at', { ascending: false })
@@ -478,9 +501,11 @@ async function loadPosts() {
 
   const { data, error } = await query;
   if (error) {
-    showConfigBanner(`Não foi possível carregar o feed: ${escapeHtml(error.message)}`);
-    els.feedEmpty.classList.remove('hidden');
-    return;
+    if (!searchTerm) {
+      showConfigBanner(`Não foi possível carregar o feed: ${escapeHtml(error.message)}`);
+      els.feedEmpty?.classList.remove('hidden');
+    }
+    return null;
   }
   let posts = data || [];
   if (state.topicFilter) {
@@ -491,9 +516,148 @@ async function loadPosts() {
     );
     posts = posts.filter((post) => hasHashtag(post.content, topic) || postIds.has(post.id));
   }
-  state.posts = posts;
+  return posts;
+}
+
+function foldText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function sanitizeIlike(term) {
+  return String(term || '')
+    .replace(/[,()\\*%]/g, ' ')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+}
+
+function postMatchesSearch(post, foldedQuery) {
+  if (!foldedQuery) return true;
+  const tags = String(post.content || '').match(/#[A-Za-z0-9_À-ÿ]+/g) || [];
+  return foldText([post.title, post.content, ...tags].join(' ')).includes(foldedQuery);
+}
+
+function filterPostsLocal(posts, term) {
+  const folded = foldText(term);
+  if (!folded) return [...posts];
+  return posts.filter((post) => postMatchesSearch(post, folded));
+}
+
+function sortFeedPosts(posts) {
+  const list = [...posts];
+  if (state.sort === 'apoios') {
+    list.sort(
+      (a, b) =>
+        (Number(b.likes_count) || 0) - (Number(a.likes_count) || 0) ||
+        new Date(b.created_at) - new Date(a.created_at),
+    );
+  } else {
+    list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  return list;
+}
+
+function mergeSearchResults(remote, local) {
+  const byId = new Map();
+  for (const post of [...(remote || []), ...local]) {
+    if (post?.id) byId.set(post.id, post);
+  }
+  return sortFeedPosts([...byId.values()]);
+}
+
+function applyLocalSearch() {
+  state.posts = filterPostsLocal(state.postsBase, state.searchTerm);
   renderFeed();
-  syncTopicButtons();
+  updateSearchStatus();
+}
+
+async function searchRemote() {
+  const term = state.searchTerm;
+  const token = ++searchSeq;
+  if (!term) {
+    state.posts = [...state.postsBase];
+    renderFeed();
+    updateSearchStatus();
+    return;
+  }
+  const remote = sanitizeIlike(term) ? await fetchFeedPosts(term) : [];
+  if (token !== searchSeq || remote == null) return;
+  const localHits = filterPostsLocal(state.postsBase, term);
+  state.posts = mergeSearchResults(remote, localHits);
+  renderFeed();
+  updateSearchStatus();
+}
+
+function scheduleRemoteSearch() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    searchRemote();
+  }, 300);
+}
+
+function syncSearchClear() {
+  const hasValue = Boolean(String(els.feedSearch?.value || '').trim());
+  els.searchClear?.classList.toggle('hidden', !hasValue);
+}
+
+function onSearchInput() {
+  state.searchTerm = String(els.feedSearch?.value || '').trim();
+  syncSearchClear();
+  applyLocalSearch();
+  scheduleRemoteSearch();
+}
+
+function onSearchSubmit(event) {
+  event.preventDefault();
+  state.searchTerm = String(els.feedSearch?.value || '').trim();
+  syncSearchClear();
+  clearTimeout(searchDebounce);
+  applyLocalSearch();
+  searchRemote();
+}
+
+function clearSearch() {
+  if (els.feedSearch) els.feedSearch.value = '';
+  state.searchTerm = '';
+  syncSearchClear();
+  clearTimeout(searchDebounce);
+  searchSeq += 1;
+  state.posts = [...state.postsBase];
+  renderFeed();
+  updateSearchStatus();
+  els.feedSearch?.focus();
+}
+
+function updateSearchStatus() {
+  if (!els.searchStatus) return;
+  const term = state.searchTerm;
+  if (!term) {
+    els.searchStatus.textContent = '';
+    return;
+  }
+  if (state.posts.length) {
+    els.searchStatus.textContent = `Exibindo resultados para: '${term}'`;
+    return;
+  }
+  els.searchStatus.textContent = 'Nenhum debate encontrado para o termo pesquisado';
+}
+
+function focusComposeToCreate() {
+  if (!state.user) {
+    openLogin();
+    return;
+  }
+  if (needsCauRegistration()) {
+    openCauModal();
+    return;
+  }
+  els.composeBar?.classList.remove('hidden');
+  els.composeBar?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('post-content')?.focus();
 }
 
 function hasHashtag(text, topic) {
@@ -588,11 +752,14 @@ async function loadReports() {
 
 function renderFeed() {
   els.feed.innerHTML = '';
+  const searching = Boolean(state.searchTerm);
   if (!state.posts.length) {
-    els.feedEmpty.classList.remove('hidden');
+    els.feedEmpty.classList.toggle('hidden', searching);
+    els.feedSearchEmpty?.classList.toggle('hidden', !searching);
     return;
   }
   els.feedEmpty.classList.add('hidden');
+  els.feedSearchEmpty?.classList.add('hidden');
   const fragment = document.createDocumentFragment();
   for (const post of state.posts) {
     fragment.appendChild(renderCard(post));
@@ -947,6 +1114,13 @@ function bindStaticEvents() {
     loadPosts();
   });
   els.postForm.addEventListener('submit', submitPost);
+  els.searchForm?.addEventListener('submit', onSearchSubmit);
+  els.feedSearch?.addEventListener('input', onSearchInput);
+  els.feedSearch?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') clearSearch();
+  });
+  els.searchClear?.addEventListener('click', clearSearch);
+  els.searchCreate?.addEventListener('click', focusComposeToCreate);
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
