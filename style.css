@@ -436,9 +436,32 @@ body.app-body::before {
 
 dialog {
   border: 0;
-  padding: 1.35rem;
   color: var(--text-primary);
-  max-width: min(32rem, calc(100% - 2rem));
+  max-width: min(28rem, calc(100% - 2.5rem));
+  margin: auto;
+}
+
+dialog.liquid-card {
+  padding: 2rem 1.85rem 1.75rem;
+  box-sizing: border-box;
+}
+
+dialog.liquid-card:hover {
+  transform: none;
+}
+
+dialog.liquid-card form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+dialog.liquid-card .card-title,
+dialog.liquid-card .title-xl {
+  margin: 0;
+}
+
+dialog.liquid-card .lede {
+  margin: 0;
 }
 
 dialog::backdrop {
