@@ -153,14 +153,16 @@ async function submitCau(event) {
   showFeedback(els.cauFeedback, 'Validando e salvando…');
   const { data, error } = await state.supabase.rpc('set_cau_number', { p_cau: cau });
   if (error) {
-    const duplicated = /vinculado a outra conta/i.test(error.message);
-    showFeedback(
-      els.cauFeedback,
-      duplicated
-        ? 'Este registro do CAU já está vinculado a outra conta.'
-        : error.message.replace('registro CAU invalido: ', '') || mensagemErroRegistroCAU(cau),
-      true,
-    );
+    const raw = error.message || '';
+    let message = raw;
+    if (/vinculado a outra conta/i.test(raw)) {
+      message = 'Este registro do CAU já está vinculado a outra conta.';
+    } else if (/PGRST202|schema cache|Could not find the function/i.test(raw)) {
+      message = 'A validação do CAU ainda não está ativa no banco. Execute sql/cau-number.sql no SQL Editor do Supabase.';
+    } else if (/invalido/i.test(raw)) {
+      message = mensagemErroRegistroCAU(cau);
+    }
+    showFeedback(els.cauFeedback, message, true);
     return;
   }
 
