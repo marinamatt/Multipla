@@ -3,7 +3,7 @@
  * A checagem ocorre antes do insert no Supabase; não substitui moderação humana.
  */
 
-export const MIN_CHARS = 15;
+export const MIN_CHARS = 3;
 export const MAX_CHARS_POST = 1000;
 export const MAX_CHARS_COMENTARIO = 800;
 
@@ -24,7 +24,6 @@ const PALAVRAS_BANIDAS = [
   'caralho',
   'caralhos',
   'corno',
-  'cu',
   'cuzao',
   'cuzinho',
   'desgracada',
@@ -166,7 +165,25 @@ export function verificarFormatoMensagem(texto, { min = MIN_CHARS, max = MAX_CHA
   return true;
 }
 
+/**
+ * @returns {string} vazio se puder enviar; senão o motivo para o usuário
+ */
+export function motivoRetencao(texto, { min = MIN_CHARS, max = MAX_CHARS_POST } = {}) {
+  const value = String(texto || '').trim();
+  if (!value) return 'Escreva uma mensagem antes de publicar.';
+  if (value.length < min) {
+    return `Escreva pelo menos ${min} caracteres para publicar.`;
+  }
+  if (value.length > max) {
+    return `A mensagem pode ter no máximo ${max} caracteres.`;
+  }
+  if (soTemCaracteresRepetidos(value)) {
+    return 'Evite mensagens feitas só com o mesmo caractere repetido (ex.: aaaaaa).';
+  }
+  if (!verificarConteudoApropriado(value)) return MENSAGEM_CONTEUDO_RETIDO;
+  return '';
+}
+
 export function podeEnviarMensagem(texto, limites = {}) {
-  if (!verificarFormatoMensagem(texto, limites)) return false;
-  return verificarConteudoApropriado(texto);
+  return !motivoRetencao(texto, limites);
 }

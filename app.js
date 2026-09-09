@@ -5,7 +5,7 @@ import {
   MIN_CHARS,
   MAX_CHARS_POST,
   MAX_CHARS_COMENTARIO,
-  podeEnviarMensagem,
+  motivoRetencao,
 } from './js/moderation.js';
 
 const RATE_LIMIT_MS = 30 * 1000;
@@ -292,9 +292,14 @@ function showModerationAlert() {
   announce(MENSAGEM_CONTEUDO_RETIDO);
 }
 
-function reterConteudo(feedbackNode) {
-  showModerationAlert();
-  showFeedback(feedbackNode, MENSAGEM_CONTEUDO_RETIDO, true);
+function reterConteudo(feedbackNode, texto, limites) {
+  const motivo = motivoRetencao(texto, limites);
+  showFeedback(feedbackNode, motivo, true);
+  if (motivo === MENSAGEM_CONTEUDO_RETIDO) {
+    showModerationAlert();
+  } else {
+    hideModerationAlert();
+  }
 }
 
 function markSubmitted() {
@@ -723,8 +728,9 @@ async function submitPost(event) {
     return;
   }
   const content = document.getElementById('post-content').value.trim();
-  if (!podeEnviarMensagem(content, { min: MIN_CHARS, max: MAX_CHARS_POST })) {
-    reterConteudo(els.postFeedback);
+  const limitesPost = { min: MIN_CHARS, max: MAX_CHARS_POST };
+  if (motivoRetencao(content, limitesPost)) {
+    reterConteudo(els.postFeedback, content, limitesPost);
     return;
   }
   try {
@@ -770,8 +776,9 @@ async function submitComment(event, postId, card) {
     return;
   }
   const content = form.querySelector('[data-comment-input]').value.trim();
-  if (!podeEnviarMensagem(content, { min: MIN_CHARS, max: MAX_CHARS_COMENTARIO })) {
-    reterConteudo(feedback);
+  const limitesComentario = { min: MIN_CHARS, max: MAX_CHARS_COMENTARIO };
+  if (motivoRetencao(content, limitesComentario)) {
+    reterConteudo(feedback, content, limitesComentario);
     return;
   }
   try {
