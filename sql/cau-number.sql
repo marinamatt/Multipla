@@ -1,6 +1,6 @@
--- Incremental: rode de novo no SQL Editor.
--- Aceita o dígito verificador do CAU com Módulo 11 nos dois sentidos de peso
--- (necessário para números reais como A254056-8).
+-- Incremental: rode no SQL Editor (pode executar de novo).
+-- Validação do CAU/SC por pesquisa na relação oficial de ativos (não usa Módulo 11).
+-- Depois rode também sql/cau-sc-ativos.sql para carregar a lista.
 
 alter table public.profiles add column if not exists cau_number text;
 
@@ -8,90 +8,49 @@ create unique index if not exists profiles_cau_number_unique
   on public.profiles (cau_number)
   where cau_number is not null;
 
+create table if not exists public.cau_sc_ativos (
+  code text primary key
+);
+
 create or replace function public.normalize_cau_number(p_cau text)
 returns text
-language sql
-immutable
-as $$
-  select upper(regexp_replace(btrim(coalesce(p_cau, '')), '\s+', '', 'g'));
-$$;
-
-create or replace function public.cau_digit_modulo11(p_digits text)
-returns integer
 language plpgsql
 immutable
 as $$
 declare
-  i int;
-  soma int := 0;
-  peso int := 2;
-  resto int;
+  v text;
 begin
-  if p_digits is null or p_digits !~ '^[0-9]+$' then
+  v := upper(regexp_replace(btrim(coalesce(p_cau, '')), '[.\s\-]+', '', 'g'));
+  v := regexp_replace(v, '^0+', '');
+  if v is null or v = '' then
     return null;
   end if;
-  for i in reverse 1 .. char_length(p_digits) loop
-    soma := soma + substr(p_digits, i, 1)::int * peso;
-    peso := case when peso >= 9 then 2 else peso + 1 end;
-  end loop;
-  resto := soma % 11;
-  if resto < 2 then
-    return 0;
+  if v ~ '^[0-9]+$' then
+    v := 'A' || v;
   end if;
-  return 11 - resto;
+  if v !~ '^A[0-9]+$' then
+    return null;
+  end if;
+  return lpad(v, 10, '0');
 end;
 $$;
 
-create or replace function public.cau_digit_modulo11_ltr(p_digits text)
-returns integer
-language plpgsql
-immutable
-as $$
-declare
-  i int;
-  soma int := 0;
-  peso int := 2;
-  resto int;
-begin
-  if p_digits is null or p_digits !~ '^[0-9]+$' then
-    return null;
-  end if;
-  for i in 1 .. char_length(p_digits) loop
-    soma := soma + substr(p_digits, i, 1)::int * peso;
-    peso := case when peso >= 9 then 2 else peso + 1 end;
-  end loop;
-  resto := soma % 11;
-  if resto = 10 then
-    return 0;
-  end if;
-  return resto;
-end;
-$$;
+drop function if exists public.cau_digit_modulo11(text);
+drop function if exists public.cau_digit_modulo11_ltr(text);
 
 create or replace function public.cau_number_is_valid(p_cau text)
 returns boolean
-language plpgsql
-immutable
+language sql
+stable
+security definer
+set search_path = public
 as $$
-declare
-  v text := public.normalize_cau_number(p_cau);
-  corpo text;
-  dv int;
-begin
-  if v !~ '^A[0-9]{5,8}-[0-9]$' then
-    return false;
-  end if;
-  corpo := substring(v from '^A([0-9]+)-[0-9]$');
-  dv := substring(v from '-([0-9])$')::int;
-  return public.cau_digit_modulo11(corpo) = dv
-      or public.cau_digit_modulo11_ltr(corpo) = dv;
-end;
+  select exists (
+    select 1
+    from public.cau_sc_ativos a
+    where a.code = public.normalize_cau_number(p_cau)
+  );
 $$;
-
-alter table public.profiles drop constraint if exists profiles_cau_number_valid;
-alter table public.profiles
-  add constraint profiles_cau_number_valid
-  check (cau_number is null or public.cau_number_is_valid(cau_number));
 
 create or replace function public.set_cau_number(p_cau text)
 returns text
@@ -108,8 +67,8 @@ begin
   end if;
 
   v_norm := public.normalize_cau_number(p_cau);
-  if not public.cau_number_is_valid(v_norm) then
-    raise exception 'registro CAU invalido: use o formato A123456-7 com o digito verificador correto';
+  if v_norm is null or not public.cau_number_is_valid(v_norm) then
+    raise exception 'registro CAU invalido: numero nao consta na relacao de ativos do CAU/SC';
   end if;
 
   insert into public.profiles (id, cau_number)
@@ -130,17 +89,13 @@ exception
 end;
 $$;
 
+revoke all on table public.cau_sc_ativos from public, anon, authenticated;
 revoke all on function public.normalize_cau_number(text) from public;
-revoke all on function public.cau_digit_modulo11(text) from public;
-revoke all on function public.cau_digit_modulo11_ltr(text) from public;
 revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
-grant execute on function public.cau_digit_modulo11(text) to authenticated;
-grant execute on function public.cau_digit_modulo11_ltr(text) to authenticated;
 grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
 
--- Recria current_profile para incluir cau_number (CREATE OR REPLACE não muda o retorno).
 drop function if exists public.current_profile();
 create function public.current_profile()
 returns table (

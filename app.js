@@ -1,5 +1,6 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './js/config.js';
+import { canonicalCau, validarRegistroCAU, mensagemErroRegistroCAU } from './js/cau.js';
 import {
   MENSAGEM_CONTEUDO_RETIDO,
   MIN_CHARS,
@@ -67,68 +68,10 @@ function hasCauNumber() {
   return Boolean(String(state.profile?.cau_number || '').trim());
 }
 
-function normalizarRegistroCAU(cau) {
-  return String(cau || '')
-    .trim()
+function formatCauInput(value) {
+  return String(value || '')
     .toUpperCase()
-    .replace(/\s+/g, '');
-}
-
-function digitoVerificadorModulo11Direita(digitos) {
-  const nums = String(digitos);
-  let soma = 0;
-  let peso = 2;
-  for (let i = nums.length - 1; i >= 0; i -= 1) {
-    soma += Number(nums[i]) * peso;
-    peso = peso === 9 ? 2 : peso + 1;
-  }
-  const resto = soma % 11;
-  return resto < 2 ? 0 : 11 - resto;
-}
-
-function digitoVerificadorModulo11Esquerda(digitos) {
-  const nums = String(digitos);
-  let soma = 0;
-  let peso = 2;
-  for (let i = 0; i < nums.length; i += 1) {
-    soma += Number(nums[i]) * peso;
-    peso = peso === 9 ? 2 : peso + 1;
-  }
-  const resto = soma % 11;
-  return resto === 10 ? 0 : resto;
-}
-
-/**
- * Valida o registro do CAU: letra A, números e dígito verificador (Módulo 11).
- * Aceita as duas convenções usuais (pesos da direita ou da esquerda), porque o SICCAU
- * emite números reais que não batem com um único sentido de peso.
- * @param {string} cau
- * @returns {boolean}
- */
-function validarRegistroCAU(cau) {
-  const value = normalizarRegistroCAU(cau);
-  const match = /^A(\d{5,8})-(\d)$/.exec(value);
-  if (!match) return false;
-  const corpo = match[1];
-  const dv = Number(match[2]);
-  return (
-    digitoVerificadorModulo11Direita(corpo) === dv ||
-    digitoVerificadorModulo11Esquerda(corpo) === dv
-  );
-}
-
-function mensagemErroRegistroCAU(cau) {
-  const value = normalizarRegistroCAU(cau);
-  if (!value) {
-    return 'Informe o seu registro do CAU, no formato A123456-7.';
-  }
-  if (!/^A\d{5,8}-\d$/.test(value)) {
-    return 'O registro deve começar com a letra A, seguida de números e o dígito após o hífen (ex.: A123456-7).';
-  }
-  if (!validarRegistroCAU(value)) {
-    return 'O dígito verificador (número após o hífen) não confere. Confira o número no SICCAU ou no seu cartão do CAU.';
-  }
-  return '';
+    .replace(/[^A0-9\-]/g, '');
 }
 
 function syncComposeLock() {
@@ -168,7 +111,7 @@ function mensagemErroSalvarCau(raw, cau) {
     return 'Este registro do CAU já está vinculado a outra conta.';
   }
   if (/PGRST202|schema cache|Could not find the function/i.test(text)) {
-    return 'A validação do CAU ainda não está ativa no banco. Execute sql/cau-number.sql no SQL Editor do Supabase.';
+    return 'A lista de registros CAU/SC ainda não está no banco. Execute sql/cau-number.sql e sql/cau-sc-ativos.sql no SQL Editor do Supabase.';
   }
   if (/invalido/i.test(text) || /check constraint/i.test(text)) {
     return mensagemErroRegistroCAU(cau);
@@ -219,7 +162,7 @@ async function submitCau(event) {
   const input = document.getElementById('cau-number');
   const declaration = document.getElementById('cau-declaration');
   const submitBtn = document.getElementById('cau-submit');
-  const cau = normalizarRegistroCAU(input?.value);
+  const cau = formatCauInput(input?.value);
   if (input) input.value = cau;
 
   if (!declaration?.checked) {
@@ -236,8 +179,8 @@ async function submitCau(event) {
   if (submitBtn) submitBtn.disabled = true;
   showFeedback(els.cauFeedback, 'Validando e salvando…');
   try {
-    const saved = await persistCauNumber(cau);
-    state.profile = { ...(state.profile || {}), cau_number: saved.cau_number || cau };
+    const saved = await persistCauNumber(canonicalCau(cau) || cau);
+    state.profile = { ...(state.profile || {}), cau_number: saved.cau_number || canonicalCau(cau) || cau };
     showFeedback(els.cauFeedback, 'Registro do CAU validado e salvo.');
     announce('Registro do CAU validado.');
     try {
@@ -938,7 +881,7 @@ function bindStaticEvents() {
   document.getElementById('cau-number')?.addEventListener('input', (event) => {
     const caret = event.target.selectionStart;
     const before = event.target.value;
-    event.target.value = normalizarRegistroCAU(event.target.value);
+    event.target.value = formatCauInput(event.target.value);
     if (typeof caret === 'number') {
       const delta = event.target.value.length - before.length;
       event.target.setSelectionRange(caret + delta, caret + delta);
