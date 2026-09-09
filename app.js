@@ -83,7 +83,7 @@ function showConfigBanner(html) {
 function showFeedback(node, message, isError = false) {
   if (!node) return;
   node.textContent = message;
-  node.className = `text-sm ${isError ? 'text-accent' : 'text-ink/80'}`;
+  node.className = `text-sm ${isError ? 'feedback-error' : 'feedback-ok'}`;
 }
 
 async function confirmAction(title, message) {
@@ -105,13 +105,13 @@ function openLogin() {
 
 function renderAuth() {
   if (!CONFIG_READY) {
-    els.authSlot.innerHTML = `<span class="text-sm text-paper/80">Configure o Supabase para entrar</span>`;
+    els.authSlot.innerHTML = `<span class="meta">Configure o Supabase para entrar</span>`;
     return;
   }
 
   if (!state.user) {
     els.authSlot.innerHTML = `
-      <button type="button" id="btn-login" class="rounded bg-paper px-3 py-2 text-sm font-bold text-ink">
+      <button type="button" id="btn-login" class="btn btn-primary">
         Entrar com Google
       </button>
     `;
@@ -127,23 +127,21 @@ function renderAuth() {
       state.user.user_metadata?.picture ||
       '',
   );
-  const adminTag = isAdmin()
-    ? `<span class="stamp bg-paper/10 text-paper">Administrador</span>`
-    : '';
+  const adminTag = isAdmin() ? `<span class="admin-tag">Administrador</span>` : '';
 
   els.authSlot.innerHTML = `
     <div class="flex items-center gap-3">
       ${
         avatar
-          ? `<img src="${avatar}" alt="" width="36" height="36" class="h-9 w-9 rounded-full object-cover" />`
+          ? `<img src="${avatar}" alt="" width="36" height="36" class="avatar" />`
           : ''
       }
       <div class="text-right">
-        <p class="text-sm font-bold leading-tight">${escapeHtml(name)}</p>
+        <p class="user-name">${escapeHtml(name)}</p>
         ${adminTag}
       </div>
-      <button type="button" id="btn-delete-mine" class="text-xs underline text-paper/80">Excluir minhas contribuições</button>
-      <button type="button" id="btn-logout" class="rounded border border-paper/40 px-3 py-1.5 text-sm">Sair</button>
+      <button type="button" id="btn-delete-mine" class="btn-text">Excluir minhas contribuições</button>
+      <button type="button" id="btn-logout" class="btn btn-ghost">Sair</button>
     </div>
   `;
   document.getElementById('btn-logout')?.addEventListener('click', signOut);
@@ -219,6 +217,7 @@ async function loadPosts() {
   const { data, error } = await query;
   if (error) {
     showConfigBanner(`Não foi possível carregar o feed: ${escapeHtml(error.message)}`);
+    els.feedEmpty.classList.remove('hidden');
     return;
   }
   state.posts = data || [];
@@ -247,7 +246,7 @@ async function loadReports() {
     .select('*')
     .order('created_at', { ascending: false });
   if (error) {
-    els.reportsList.innerHTML = `<p class="text-sm text-accent">${escapeHtml(error.message)}</p>`;
+    els.reportsList.innerHTML = `<p class="feedback-error">${escapeHtml(error.message)}</p>`;
     return;
   }
   const reports = data || [];
@@ -258,12 +257,12 @@ async function loadReports() {
   els.reportsList.innerHTML = reports
     .map(
       (report) => `
-      <article class="rounded border border-line bg-white p-3 text-sm">
+      <article class="liquid-card comment-item text-sm">
         <p><strong>Motivo:</strong> ${escapeHtml(report.reason)}</p>
-        <p class="text-ink/70">${report.post_id ? 'Publicação' : 'Comentário'} · ${formatDate(report.created_at)} · ${escapeHtml(report.status)}</p>
+        <p class="meta">${report.post_id ? 'Publicação' : 'Comentário'} · ${formatDate(report.created_at)} · ${escapeHtml(report.status)}</p>
         ${
           report.status === 'aberta'
-            ? `<button type="button" class="mt-2 underline" data-review-report="${report.id}">Marcar como revisada</button>`
+            ? `<button type="button" class="btn-text mt-2" data-review-report="${report.id}">Marcar como revisada</button>`
             : ''
         }
       </article>
@@ -290,8 +289,9 @@ function renderCard(post) {
   const node = els.cardTemplate.content.firstElementChild.cloneNode(true);
   const badge = node.querySelector('[data-badge]');
   const isIdeia = post.type === 'ideia';
-  badge.textContent = isIdeia ? 'Ideia' : 'Reclamação';
-  badge.classList.add(isIdeia ? 'stamp-ideia' : 'stamp-reclamacao');
+  badge.textContent = isIdeia ? 'IDEIA' : 'RECLAMAÇÃO';
+  badge.classList.add(isIdeia ? 'badge-ideia' : 'badge-reclamacao');
+  node.classList.add(isIdeia ? 'category-ideia' : 'category-reclamacao');
   node.querySelector('[data-author]').textContent = post.author_name;
   const time = node.querySelector('[data-date]');
   time.dateTime = post.created_at;
@@ -304,7 +304,6 @@ function renderCard(post) {
 
   const likeBtn = node.querySelector('[data-like]');
   likeBtn.setAttribute('aria-pressed', post.liked_by_me ? 'true' : 'false');
-  likeBtn.classList.toggle('bg-[#dcefe3]', Boolean(post.liked_by_me));
   if (!state.user) {
     likeBtn.title = 'Entre para apoiar';
   }
@@ -314,7 +313,7 @@ function renderCard(post) {
 
   const adminActions = node.querySelector('[data-admin-actions]');
   if (isAdmin()) {
-    adminActions.innerHTML = `<button type="button" data-admin-delete class="rounded bg-accent px-3 py-1.5 text-xs font-bold text-white">Deletar post</button>`;
+    adminActions.innerHTML = `<button type="button" data-admin-delete class="btn-danger">Deletar post</button>`;
   }
 
   const commentForm = node.querySelector('[data-comment-form]');
@@ -352,6 +351,7 @@ async function toggleLike(post, card) {
       post.liked_by_me = payload.liked;
       post.likes_count = payload.likes_count;
       card.querySelector('[data-like-count]').textContent = payload.likes_count;
+      card.querySelector('[data-like]').setAttribute('aria-pressed', String(payload.liked));
     }
     announce(post.liked_by_me ? 'Apoio registrado.' : 'Apoio removido.');
   } catch (error) {
@@ -386,19 +386,19 @@ async function renderComments(postId, card) {
     }
     list.innerHTML = comments
       .map((comment) => {
-        const hiddenNote = comment.is_hidden ? ' <span class="stamp stamp-reclamacao">Oculto</span>' : '';
+        const hiddenNote = comment.is_hidden ? ' <span class="admin-tag">Oculto</span>' : '';
         const ownBtn = comment.is_own
-          ? `<button type="button" class="underline text-sm" data-del-comment="${comment.id}">Excluir</button>`
+          ? `<button type="button" class="btn-text" data-del-comment="${comment.id}">Excluir</button>`
           : '';
         const hideBtn = isAdmin()
-          ? `<button type="button" class="underline text-sm" data-hide-comment="${comment.id}" data-hidden="${comment.is_hidden}">${comment.is_hidden ? 'Reexibir' : 'Ocultar'}</button>`
+          ? `<button type="button" class="btn-text" data-hide-comment="${comment.id}" data-hidden="${comment.is_hidden}">${comment.is_hidden ? 'Reexibir' : 'Ocultar'}</button>`
           : '';
         const reportBtn = state.user
-          ? `<button type="button" class="underline text-sm" data-report-comment="${comment.id}">Denunciar</button>`
+          ? `<button type="button" class="btn-text" data-report-comment="${comment.id}">Denunciar</button>`
           : '';
         return `
-          <article class="rounded border border-line/70 bg-white p-3 ${comment.is_hidden ? 'opacity-70' : ''}">
-            <p class="text-sm"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${comment.created_at}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
+          <article class="liquid-card comment-item ${comment.is_hidden ? 'opacity-70' : ''}">
+            <p class="meta"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${comment.created_at}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
             <p class="mt-1 whitespace-pre-wrap text-sm">${escapeHtml(comment.content)}</p>
             <div class="mt-2 flex gap-3">${ownBtn}${hideBtn}${reportBtn}</div>
           </article>
@@ -418,7 +418,7 @@ async function renderComments(postId, card) {
       btn.addEventListener('click', () => openReport({ commentId: btn.getAttribute('data-report-comment') }));
     });
   } catch (error) {
-    list.innerHTML = `<p class="text-sm text-accent">${escapeHtml(error.message)}</p>`;
+    list.innerHTML = `<p class="feedback-error">${escapeHtml(error.message)}</p>`;
   }
 }
 
