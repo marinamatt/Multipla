@@ -296,7 +296,6 @@ function renderCard(post) {
   const time = node.querySelector('[data-date]');
   time.dateTime = post.created_at;
   time.textContent = formatDate(post.created_at);
-  node.querySelector('[data-title]').textContent = post.title || (isIdeia ? 'Ideia' : 'Reclamação');
   node.querySelector('[data-content]').textContent = post.content;
   node.querySelector('[data-like-count]').textContent = post.likes_count ?? 0;
   node.querySelector('[data-comment-count]').textContent = post.comments_count ?? 0;
