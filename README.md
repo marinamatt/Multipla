@@ -13,7 +13,7 @@ Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. 
 
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. Abra **SQL Editor** e execute o arquivo `script.sql`.
-   Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta) e `sql/cau-number.sql` (registro CAU e RLS de publicações).
+   Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta) e `sql/cau-number.sql` (registro CAU — execute de novo se o salvamento do número ficar preso em “Validando e salvando”).
 3. **Authentication → Providers → Google**: habilite o provedor e informe Client ID / Secret do Google Cloud.
 4. **Authentication → URL Configuration**: em Redirect URLs, coloque `http://localhost:3000` e a URL de produção (Netlify/Vercel).
 5. Torne um usuário administrador (depois do primeiro login):
