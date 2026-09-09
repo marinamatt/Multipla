@@ -53,6 +53,7 @@ const els = {
 };
 
 let cauPromptShown = false;
+let cauSaveInFlight = false;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -131,6 +132,7 @@ function openCauModal() {
 
 function maybePromptCau() {
   syncComposeLock();
+  if (cauSaveInFlight) return;
   if (!state.user || hasCauNumber()) {
     if (els.cauDialog?.open) els.cauDialog.close();
     return;
@@ -141,10 +143,65 @@ function maybePromptCau() {
   }
 }
 
+function mensagemErroSalvarCau(raw, cau) {
+  const text = String(raw || '');
+  if (/vinculado a outra conta/i.test(text)) {
+    return 'Este registro do CAU já está vinculado a outra conta.';
+  }
+  if (/PGRST202|schema cache|Could not find the function/i.test(text)) {
+    return 'A validação do CAU ainda não está ativa no banco. Execute sql/cau-number.sql no SQL Editor do Supabase.';
+  }
+  if (/invalido/i.test(text) || /check constraint/i.test(text)) {
+    return mensagemErroRegistroCAU(cau);
+  }
+  if (/autenticacao obrigatoria/i.test(text)) {
+    return 'Sua sessão expirou. Entre novamente com o Google e tente salvar o CAU.';
+  }
+  if (/nao foi possivel salvar|perfil nao encontrado/i.test(text)) {
+    return 'Não foi possível gravar o registro neste perfil. Recarregue a página e tente de novo.';
+  }
+  if (/timeout|aborted|Failed to fetch|NetworkError/i.test(text)) {
+    return 'A conexão com o servidor demorou demais. Verifique a internet e tente novamente.';
+  }
+  return text || 'Não foi possível salvar o registro do CAU. Tente novamente.';
+}
+
+async function rpcComTimeout(fn, ms = 12000) {
+  let timer;
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function persistCauNumber(cau) {
+  const rpc = await rpcComTimeout(() => state.supabase.rpc('set_cau_number', { p_cau: cau }));
+  if (!rpc.error) {
+    const payload = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+    const saved = typeof payload === 'string' || payload == null ? payload : payload.cau_number;
+    return { cau_number: saved || cau };
+  }
+
+  const fallback = await rpcComTimeout(() =>
+    state.supabase.from('profiles').update({ cau_number: cau }).eq('id', state.user.id).select('id'),
+  );
+  if (fallback.error || !fallback.data?.length) {
+    throw new Error(rpc.error.message || fallback.error?.message || 'nao foi possivel salvar o registro CAU');
+  }
+  return { cau_number: cau };
+}
+
 async function submitCau(event) {
   event.preventDefault();
   const input = document.getElementById('cau-number');
   const declaration = document.getElementById('cau-declaration');
+  const submitBtn = document.getElementById('cau-submit');
   const cau = normalizarRegistroCAU(input?.value);
   if (input) input.value = cau;
 
@@ -158,28 +215,26 @@ async function submitCau(event) {
     return;
   }
 
+  cauSaveInFlight = true;
+  if (submitBtn) submitBtn.disabled = true;
   showFeedback(els.cauFeedback, 'Validando e salvando…');
-  const { data, error } = await state.supabase.rpc('set_cau_number', { p_cau: cau });
-  if (error) {
-    const raw = error.message || '';
-    let message = raw;
-    if (/vinculado a outra conta/i.test(raw)) {
-      message = 'Este registro do CAU já está vinculado a outra conta.';
-    } else if (/PGRST202|schema cache|Could not find the function/i.test(raw)) {
-      message = 'A validação do CAU ainda não está ativa no banco. Execute sql/cau-number.sql no SQL Editor do Supabase.';
-    } else if (/invalido/i.test(raw)) {
-      message = mensagemErroRegistroCAU(cau);
+  try {
+    const saved = await persistCauNumber(cau);
+    state.profile = { ...(state.profile || {}), cau_number: saved.cau_number || cau };
+    showFeedback(els.cauFeedback, 'Registro do CAU validado e salvo.');
+    announce('Registro do CAU validado.');
+    try {
+      els.cauDialog?.close();
+    } catch {
+      /* dialog já fechado */
     }
-    showFeedback(els.cauFeedback, message, true);
-    return;
+    syncComposeLock();
+  } catch (error) {
+    showFeedback(els.cauFeedback, mensagemErroSalvarCau(error.message, cau), true);
+  } finally {
+    cauSaveInFlight = false;
+    if (submitBtn) submitBtn.disabled = false;
   }
-
-  const saved = Array.isArray(data) ? data[0] : data;
-  state.profile = { ...(state.profile || {}), cau_number: saved || cau };
-  showFeedback(els.cauFeedback, 'Registro do CAU validado e salvo.');
-  announce('Registro do CAU validado.');
-  els.cauDialog.close();
-  syncComposeLock();
 }
 
 function formatDate(iso) {
@@ -328,19 +383,25 @@ async function loadProfile() {
     state.profile = null;
     return;
   }
-  const { data, error } = await state.supabase.rpc('current_profile');
-  if (error) {
+  const previousCau = state.profile?.cau_number;
+  try {
+    const { data, error } = await rpcComTimeout(() => state.supabase.rpc('current_profile'), 10000);
+    if (error) throw error;
+    const next = Array.isArray(data) ? data[0] : data;
+    state.profile = next || state.profile;
+    if (!state.profile?.cau_number && previousCau) {
+      state.profile = { ...(state.profile || {}), cau_number: previousCau };
+    }
+  } catch (error) {
     console.warn(error);
     state.profile = {
       id: state.user.id,
       full_name: state.user.user_metadata?.full_name || state.user.user_metadata?.name || 'Arquiteto(a)',
       avatar_url: state.user.user_metadata?.avatar_url || state.user.user_metadata?.picture,
-      is_admin: false,
-      cau_number: null,
+      is_admin: Boolean(state.profile?.is_admin),
+      cau_number: previousCau || null,
     };
-    return;
   }
-  state.profile = Array.isArray(data) ? data[0] : data;
 }
 
 async function signInWithGoogle() {

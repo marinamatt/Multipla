@@ -1,5 +1,5 @@
--- Incremental: rode no SQL Editor se o schema principal já foi aplicado.
--- Registro CAU em profiles + RLS de posts + RPC set_cau_number.
+-- Incremental: rode no SQL Editor (pode executar de novo).
+-- Corrige o salvamento do CAU com FORCE RLS: política de UPDATE só em cau_number.
 
 alter table public.profiles add column if not exists cau_number text;
 
@@ -84,12 +84,15 @@ begin
     raise exception 'registro CAU invalido: use o formato A123456-7 com o digito verificador correto';
   end if;
 
-  update public.profiles
-  set cau_number = v_norm
-  where id = v_uid;
+  insert into public.profiles (id, cau_number)
+  values (v_uid, v_norm)
+  on conflict (id) do update
+    set cau_number = excluded.cau_number;
 
-  if not found then
-    raise exception 'perfil nao encontrado';
+  if not exists (
+    select 1 from public.profiles where id = v_uid and cau_number = v_norm
+  ) then
+    raise exception 'nao foi possivel salvar o registro CAU';
   end if;
 
   return v_norm;
@@ -103,6 +106,7 @@ revoke all on function public.normalize_cau_number(text) from public;
 revoke all on function public.cau_digit_modulo11(text) from public;
 revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
+grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
 
 -- Recria current_profile para incluir cau_number (CREATE OR REPLACE não muda o retorno).
@@ -128,6 +132,19 @@ $$;
 
 revoke all on function public.current_profile() from public;
 grant execute on function public.current_profile() to authenticated;
+
+grant update (cau_number) on public.profiles to authenticated;
+
+drop policy if exists profiles_update_own_cau on public.profiles;
+create policy profiles_update_own_cau
+  on public.profiles
+  for update
+  to authenticated
+  using (id = (select auth.uid()))
+  with check (
+    id = (select auth.uid())
+    and public.cau_number_is_valid(cau_number)
+  );
 
 drop policy if exists posts_insert_own on public.posts;
 create policy posts_insert_own

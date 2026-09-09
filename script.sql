@@ -241,12 +241,15 @@ begin
     raise exception 'registro CAU invalido: use o formato A123456-7 com o digito verificador correto';
   end if;
 
-  update public.profiles
-  set cau_number = v_norm
-  where id = v_uid;
+  insert into public.profiles (id, cau_number)
+  values (v_uid, v_norm)
+  on conflict (id) do update
+    set cau_number = excluded.cau_number;
 
-  if not found then
-    raise exception 'perfil nao encontrado';
+  if not exists (
+    select 1 from public.profiles where id = v_uid and cau_number = v_norm
+  ) then
+    raise exception 'nao foi possivel salvar o registro CAU';
   end if;
 
   return v_norm;
@@ -260,6 +263,7 @@ revoke all on function public.normalize_cau_number(text) from public;
 revoke all on function public.cau_digit_modulo11(text) from public;
 revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
+grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
 
 -- -----------------------------------------------------------------------------
@@ -504,6 +508,7 @@ alter table public.consents force row level security;
 revoke all on all tables in schema public from public, anon, authenticated;
 
 grant select (id, full_name, avatar_url) on public.profiles to anon, authenticated;
+grant update (cau_number) on public.profiles to authenticated;
 
 grant insert (type, title, content, is_anonymous, lgpd_consent) on public.posts to authenticated;
 grant delete on public.posts to authenticated;
@@ -532,6 +537,18 @@ create policy profiles_select_public
   for select
   to anon, authenticated
   using (true);
+
+-- Só o próprio cau_number (GRANT não inclui is_admin). Precisa existir porque profiles usa FORCE RLS.
+drop policy if exists profiles_update_own_cau on public.profiles;
+create policy profiles_update_own_cau
+  on public.profiles
+  for update
+  to authenticated
+  using (id = (select auth.uid()))
+  with check (
+    id = (select auth.uid())
+    and public.cau_number_is_valid(cau_number)
+  );
 
 -- posts: inserção autenticada só com LGPD e registro CAU preenchido no perfil
 drop policy if exists posts_insert_own on public.posts;

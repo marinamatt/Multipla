@@ -199,7 +199,8 @@
       <form id="cau-form" class="space-y-4" novalidate>
         <h2 id="cau-title" class="title-xl" style="font-size: 1.6rem">Registro no CAU</h2>
         <p class="lede">
-          Para publicar na mesa de debate, informe o seu número de registro no Conselho de Arquitetura e Urbanismo.
+          Para <strong>publicar</strong> ideias e reclamações, informe o seu número de registro no CAU.
+          Comentários no feed não exigem esse passo — use “Agora não” se quiser só comentar.
           O dígito após o hífen é o verificador (Módulo 11). Exemplo de formato: A123456-7.
         </p>
         <label class="block text-sm" for="cau-number">
@@ -223,7 +224,7 @@
         </label>
         <p id="cau-feedback" class="meta" role="status"></p>
         <div class="flex flex-wrap gap-2">
-          <button type="submit" class="btn btn-primary">Validar e salvar</button>
+          <button type="submit" id="cau-submit" class="btn btn-primary">Validar e salvar</button>
           <button type="button" id="cau-cancel" class="btn btn-ghost">Agora não</button>
         </div>
       </form>
