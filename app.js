@@ -124,6 +124,7 @@ function openLgpdPolicyDialog(event) {
     return;
   }
   if (!els.lgpdPolicyDialog.open) els.lgpdPolicyDialog.showModal();
+  els.lgpdPolicyDialog.scrollTop = 0;
 }
 
 function maybePromptCau() {
