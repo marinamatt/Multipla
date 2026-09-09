@@ -14,6 +14,7 @@
 -- 3. Torne um perfil admin:
 --      update public.profiles set is_admin = true where email = 'seu-email@dominio.gov.br';
 -- 4. Rode sql/cau-sc-ativos.sql para carregar a lista oficial de registros CAU/SC.
+-- 5. Se publicar der "permission denied for table profiles", rode sql/fix-posts-insert-cau.sql.
 -- =============================================================================
 
 create extension if not exists "pgcrypto";
@@ -262,6 +263,26 @@ revoke all on function public.cau_number_is_valid(text) from public;
 revoke all on function public.set_cau_number(text) from public;
 grant execute on function public.cau_number_is_valid(text) to authenticated;
 grant execute on function public.set_cau_number(text) to authenticated;
+
+create or replace function public.current_user_has_valid_cau()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles p
+    where p.id = (select auth.uid())
+      and p.cau_number is not null
+      and btrim(p.cau_number) <> ''
+      and public.cau_number_is_valid(p.cau_number)
+  );
+$$;
+
+revoke all on function public.current_user_has_valid_cau() from public;
+grant execute on function public.current_user_has_valid_cau() to authenticated;
 
 -- -----------------------------------------------------------------------------
 -- Triggers: preencher user_id pelo JWT (auditoria) e sincronizar contadores
@@ -556,14 +577,7 @@ create policy posts_insert_own
   with check (
     (select auth.uid()) = user_id
     and lgpd_consent = true
-    and exists (
-      select 1
-      from public.profiles p
-      where p.id = (select auth.uid())
-        and p.cau_number is not null
-        and btrim(p.cau_number) <> ''
-        and public.cau_number_is_valid(p.cau_number)
-    )
+    and public.current_user_has_valid_cau()
   );
 
 drop policy if exists posts_delete_own_or_admin on public.posts;

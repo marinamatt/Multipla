@@ -105,6 +105,17 @@ function maybePromptCau() {
   }
 }
 
+function mensagemErroPublicar(raw) {
+  const text = String(raw || '');
+  if (/permission denied/i.test(text) && /profiles/i.test(text)) {
+    return 'O banco ainda bloqueia a publicação. Abra o SQL Editor do Supabase e execute sql/fix-posts-insert-cau.sql.';
+  }
+  if (/row-level security|rls/i.test(text)) {
+    return 'Informe e valide o seu registro do CAU para publicar.';
+  }
+  return text || 'Não foi possível publicar.';
+}
+
 function mensagemErroSalvarCau(raw, cau) {
   const text = String(raw || '');
   if (/vinculado a outra conta/i.test(text)) {
@@ -366,6 +377,20 @@ async function loadProfile() {
       is_admin: Boolean(state.profile?.is_admin),
       cau_number: previousCau || null,
     };
+  }
+  await refreshCauValidity();
+}
+
+async function refreshCauValidity() {
+  if (!state.user || !state.supabase) return;
+  try {
+    const { data, error } = await state.supabase.rpc('current_user_has_valid_cau');
+    if (error) return;
+    if (!data && state.profile) {
+      state.profile = { ...state.profile, cau_number: null };
+    }
+  } catch {
+    /* função ainda não existe no banco — usa o perfil local */
   }
 }
 
@@ -695,7 +720,10 @@ async function submitPost(event) {
     lgpd_consent: true,
   });
   if (error) {
-    showFeedback(els.postFeedback, error.message, true);
+    showFeedback(els.postFeedback, mensagemErroPublicar(error.message), true);
+    if (/row-level security|rls/i.test(error.message) || !hasCauNumber()) {
+      openCauModal();
+    }
     return;
   }
   markSubmitted();

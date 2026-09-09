@@ -13,7 +13,7 @@ Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. 
 
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
 2. Abra **SQL Editor** e execute o arquivo `script.sql`.
-   Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta), `sql/cau-number.sql` (funções do CAU) e `sql/cau-sc-ativos.sql` (lista oficial de registros ativos do CAU/SC).
+   Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta), `sql/cau-number.sql` (funções do CAU), `sql/cau-sc-ativos.sql` (lista oficial de registros ativos do CAU/SC) e `sql/fix-posts-insert-cau.sql` (corrige “permission denied for table profiles” ao publicar).
 3. **Authentication → Providers → Google**: habilite o provedor e informe Client ID / Secret do Google Cloud.
 4. **Authentication → URL Configuration** — use sempre HTTPS no Netlify (`http://` quebra o Google OAuth):
    - **Site URL:** `https://fantastic-dodol-08e97f.netlify.app`
