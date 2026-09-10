@@ -896,9 +896,7 @@ function socialShareUrls(postId, postTitle) {
     whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(
       `Confira esta proposta para o CAU/SC no Múltiplas: "${title}" ${postUrl}`,
     )}`,
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      `Proposta no Múltiplas: ${title}`,
-    )}&url=${encodeURIComponent(postUrl)}`,
+    instagram: 'https://www.instagram.com/',
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`,
   };
 }
@@ -957,11 +955,21 @@ function closeShareMenu(card) {
   if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 
+function closeOrphanSharePopovers(keepId = null) {
+  document.querySelectorAll('body > [data-share-menu]').forEach((menu) => {
+    if (keepId && menu.id === keepId) return;
+    menu.classList.add('hidden');
+    menu.remove();
+  });
+}
+
 function closeAllShareMenus(exceptCard = null) {
   els.feed?.querySelectorAll('[data-post-card]').forEach((card) => {
     if (exceptCard && card === exceptCard) return;
     closeShareMenu(card);
   });
+  const keepId = exceptCard?.querySelector('[data-share]')?.getAttribute('aria-controls');
+  closeOrphanSharePopovers(keepId);
 }
 
 function positionShareMenu(btn, menu) {
@@ -1014,8 +1022,9 @@ async function sharePost(postId, postTitle, channel) {
 
   if (channel === 'whatsapp') {
     openShareUrl(urls.whatsapp);
-  } else if (channel === 'twitter' || channel === 'x') {
-    openShareUrl(urls.twitter);
+  } else if (channel === 'instagram') {
+    await copyPostLink(urls.postUrl);
+    openShareUrl(urls.instagram);
   } else if (channel === 'linkedin') {
     openShareUrl(urls.linkedin);
   } else if (channel === 'copy') {
@@ -1094,6 +1103,7 @@ async function revealSharedPost() {
 }
 
 function renderFeed() {
+  closeAllShareMenus();
   els.feed.innerHTML = '';
   const searching = Boolean(state.searchTerm);
   if (!state.posts.length) {
@@ -1779,6 +1789,7 @@ async function handleFollowedListClick(event) {
 }
 
 async function deletePost(postId, asAdmin) {
+  closeAllShareMenus();
   const ok = await confirmAction(
     asAdmin ? 'Deletar post (moderação)' : 'Excluir publicação',
     asAdmin

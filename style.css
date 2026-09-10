@@ -531,8 +531,8 @@ body > .share-popover {
   color: #128c7e;
 }
 
-.share-option-x {
-  color: #111;
+.share-option-instagram {
+  color: #e4405f;
 }
 
 .share-option-linkedin {
@@ -646,6 +646,13 @@ body > .share-popover {
 #feed > [data-post-card] {
   position: relative;
   z-index: 1;
+}
+
+#feed > [data-post-card]:hover {
+  transform: none;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
+    0 8px 32px 0 rgba(31, 38, 135, 0.07);
 }
 
 .feed-search-block {
