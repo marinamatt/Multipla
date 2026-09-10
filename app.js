@@ -61,7 +61,6 @@ const els = {
   cauForm: document.getElementById('cau-form'),
   cauFeedback: document.getElementById('cau-feedback'),
   lgpdPolicyDialog: document.getElementById('lgpd-policy-dialog'),
-  aboutDialog: document.getElementById('about-dialog'),
   composeLock: document.getElementById('compose-lock'),
   ideaBox: document.getElementById('idea-box'),
   fabNewPost: document.getElementById('fab-new-post'),
@@ -138,16 +137,6 @@ function openCauModal() {
   syncCauFormFromProfile();
   if (!els.cauDialog.open) els.cauDialog.showModal();
   document.getElementById('cau-number')?.focus();
-}
-
-function openAboutDialog(event) {
-  event?.preventDefault();
-  if (!els.aboutDialog) {
-    window.location.href = './sobre.html';
-    return;
-  }
-  if (!els.aboutDialog.open) els.aboutDialog.showModal();
-  els.aboutDialog.scrollTop = 0;
 }
 
 function openLgpdPolicyDialog(event) {
@@ -382,7 +371,20 @@ function openLogin() {
   els.loginDialog.showModal();
 }
 
+function parkNotifyWrap() {
+  const host = document.getElementById('notify-host');
+  if (!els.notifyWrap || !host) return;
+  if (els.notifyWrap.parentElement !== host) host.appendChild(els.notifyWrap);
+}
+
+function placeNotifyBesideSettings() {
+  const gearWrap = document.getElementById('user-menu-wrap');
+  if (!els.notifyWrap || !gearWrap?.parentElement) return;
+  gearWrap.parentElement.insertBefore(els.notifyWrap, gearWrap);
+}
+
 function renderAuth() {
+  parkNotifyWrap();
   if (!CONFIG_READY) {
     els.authSlot.innerHTML = `<span class="meta">Configure o Supabase para entrar</span>`;
     return;
@@ -441,20 +443,16 @@ function renderAuth() {
         </button>
         <div id="user-menu" class="user-dropdown hidden" role="menu">
           <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="notifications">
-            <span class="user-dropdown-emoji" aria-hidden="true">🔔</span>
             Controle de Notificações
           </button>
           <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="privacy">
-            <span class="user-dropdown-emoji" aria-hidden="true">📄</span>
             Termos e Privacidade
           </button>
           <div class="user-dropdown-sep" aria-hidden="true"></div>
           <button type="button" class="user-dropdown-item user-dropdown-danger" role="menuitem" data-user-action="delete">
-            <span class="user-dropdown-emoji" aria-hidden="true">🗑️</span>
             Excluir Minhas Contribuições
           </button>
           <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="logout">
-            <span class="user-dropdown-emoji" aria-hidden="true">🚪</span>
             Sair
           </button>
         </div>
@@ -469,6 +467,7 @@ function renderAuth() {
     const btn = event.target.closest('[data-user-action]');
     if (btn) onUserMenuAction(btn.getAttribute('data-user-action'));
   });
+  placeNotifyBesideSettings();
   els.composeBar.classList.remove('hidden');
   syncComposeLock();
   refreshComposeFab();
@@ -1826,7 +1825,7 @@ async function hideComment(commentId, currentlyHidden, postId, card) {
 async function deleteMyContributions() {
   const ok = await confirmAction(
     'Atenção',
-    'Atenção: Esta ação irá remover permanentemente todas as suas propostas, comentários e votos cadastrados na plataforma Múltiplas. Deseja continuar?',
+    'Atenção: Esta ação irá remover permanentemente todas as suas propostas, comentários e votos cadastrados na Múltipla. Deseja continuar?',
     { danger: true },
   );
   if (!ok) return;
@@ -1971,8 +1970,6 @@ function bindStaticEvents() {
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
   document.getElementById('lgpd-policy-link')?.addEventListener('click', openLgpdPolicyDialog);
   document.getElementById('lgpd-policy-close')?.addEventListener('click', () => els.lgpdPolicyDialog?.close());
-  document.getElementById('about-link')?.addEventListener('click', openAboutDialog);
-  document.getElementById('about-close')?.addEventListener('click', () => els.aboutDialog?.close());
   document.getElementById('moderation-alert-close')?.addEventListener('click', hideModerationAlert);
   document.getElementById('cau-number')?.addEventListener('input', (event) => {
     const caret = event.target.selectionStart;
@@ -2021,9 +2018,9 @@ async function init() {
     if (els.trendingList) {
       els.trendingList.innerHTML = `<span class="meta">Tópicos em alta aparecem após ligar o Supabase.</span>`;
     }
-    document.getElementById('about-link')?.addEventListener('click', openAboutDialog);
-    document.getElementById('about-close')?.addEventListener('click', () => els.aboutDialog?.close());
-    if (window.location.hash === '#sobre') openAboutDialog();
+    document.getElementById('lgpd-policy-link')?.addEventListener('click', openLgpdPolicyDialog);
+    document.getElementById('lgpd-policy-close')?.addEventListener('click', () => els.lgpdPolicyDialog?.close());
+    if (window.location.hash === '#sobre') window.location.replace('./sobre.html');
     return;
   }
 
@@ -2043,7 +2040,7 @@ async function init() {
 
   const { data } = await state.supabase.auth.getSession();
   await onAuthChange(data.session);
-  if (window.location.hash === '#sobre') openAboutDialog();
+  if (window.location.hash === '#sobre') window.location.replace('./sobre.html');
 }
 
 init().catch((error) => {
