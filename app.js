@@ -61,6 +61,7 @@ const els = {
   cauForm: document.getElementById('cau-form'),
   cauFeedback: document.getElementById('cau-feedback'),
   lgpdPolicyDialog: document.getElementById('lgpd-policy-dialog'),
+  aboutDialog: document.getElementById('about-dialog'),
   composeLock: document.getElementById('compose-lock'),
   ideaBox: document.getElementById('idea-box'),
   fabNewPost: document.getElementById('fab-new-post'),
@@ -137,6 +138,16 @@ function openCauModal() {
   syncCauFormFromProfile();
   if (!els.cauDialog.open) els.cauDialog.showModal();
   document.getElementById('cau-number')?.focus();
+}
+
+function openAboutDialog(event) {
+  event?.preventDefault();
+  if (!els.aboutDialog) {
+    window.location.href = './sobre.html';
+    return;
+  }
+  if (!els.aboutDialog.open) els.aboutDialog.showModal();
+  els.aboutDialog.scrollTop = 0;
 }
 
 function openLgpdPolicyDialog(event) {
@@ -1866,6 +1877,8 @@ function bindStaticEvents() {
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);
   document.getElementById('lgpd-policy-link')?.addEventListener('click', openLgpdPolicyDialog);
   document.getElementById('lgpd-policy-close')?.addEventListener('click', () => els.lgpdPolicyDialog?.close());
+  document.getElementById('about-link')?.addEventListener('click', openAboutDialog);
+  document.getElementById('about-close')?.addEventListener('click', () => els.aboutDialog?.close());
   document.getElementById('moderation-alert-close')?.addEventListener('click', hideModerationAlert);
   document.getElementById('cau-number')?.addEventListener('input', (event) => {
     const caret = event.target.selectionStart;
@@ -1914,6 +1927,9 @@ async function init() {
     if (els.trendingList) {
       els.trendingList.innerHTML = `<span class="meta">Tópicos em alta aparecem após ligar o Supabase.</span>`;
     }
+    document.getElementById('about-link')?.addEventListener('click', openAboutDialog);
+    document.getElementById('about-close')?.addEventListener('click', () => els.aboutDialog?.close());
+    if (window.location.hash === '#sobre') openAboutDialog();
     return;
   }
 
@@ -1933,6 +1949,7 @@ async function init() {
 
   const { data } = await state.supabase.auth.getSession();
   await onAuthChange(data.session);
+  if (window.location.hash === '#sobre') openAboutDialog();
 }
 
 init().catch((error) => {

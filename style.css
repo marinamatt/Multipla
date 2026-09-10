@@ -1029,6 +1029,123 @@ dialog.settings-sheet {
   color: var(--text-primary);
 }
 
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.1rem;
+  margin: 0;
+}
+
+.about-page {
+  padding: 2.25rem 0 1rem;
+}
+
+.about-sheet {
+  display: grid;
+  gap: 1rem;
+  padding: 1.6rem 1.4rem 1.5rem;
+}
+
+.about-sheet .title-xl {
+  margin: 0;
+}
+
+.about-sheet p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.about-axes {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .about-axes {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.about-axis {
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+}
+
+.about-axis h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.about-axis p {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.about-channels {
+  display: grid;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .about-channels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.about-channel {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 16px;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+}
+
+.about-channel:hover {
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.about-channel strong {
+  display: block;
+  font-size: 0.82rem;
+}
+
+.about-channel span:last-child {
+  font-size: 0.88rem;
+}
+
+.about-channel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: #2d5bff;
+  background: rgba(45, 91, 255, 0.12);
+}
+
+.about-channel-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+dialog.about-dialog {
+  max-width: min(44rem, calc(100% - 2rem));
+}
+
 .banner {
   margin: 0.75rem auto 0;
   padding: 0.8rem 1rem;
