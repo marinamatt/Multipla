@@ -432,12 +432,13 @@ body.app-body::before {
 .btn-share {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
   background: rgba(255, 255, 255, 0.28);
   color: var(--text-muted);
   border-radius: 999px;
-  padding: 0.5rem 0.85rem;
-  font-size: 0.875rem;
   border: 1px solid rgba(255, 255, 255, 0.4);
   cursor: pointer;
   font: inherit;
@@ -450,8 +451,8 @@ body.app-body::before {
 }
 
 .share-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.05rem;
+  height: 1.05rem;
   flex-shrink: 0;
 }
 
@@ -786,11 +787,6 @@ body > .share-popover {
 }
 
 .meta {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
-
-.support-count {
   color: var(--text-muted);
   font-size: 0.875rem;
 }

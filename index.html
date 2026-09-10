@@ -478,7 +478,7 @@
               <span data-follow-label>Seguir Debate</span>
             </button>
             <span class="meta">
-              Postado por: <span data-author></span>
+              <span data-author></span>
               · <time data-date></time>
             </span>
           </div>
@@ -487,9 +487,8 @@
         <p data-content class="card-body"></p>
         <div class="flex flex-wrap items-center gap-2">
           <button type="button" data-like class="btn-support">
-            Apoiar
+            Apoiar (<span data-like-count>0</span>)
           </button>
-          <span class="support-count"><span data-like-count>0</span> apoios</span>
           <button type="button" data-toggle-comments class="btn-support" aria-expanded="false">
             Comentários (<span data-comment-count>0</span>)
           </button>
@@ -502,13 +501,11 @@
               aria-expanded="false"
               aria-label="Compartilhar proposta"
             >
-              <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 0 0 21 5a3 3 0 1 0-2.96 3.22L10.99 12.3c.05.23.09.46.09.7s-.04.47-.09.7l7.13 4.16c.5-.48 1.17-.78 1.96-.78A3 3 0 1 0 18 16.08Z"
-                />
+              <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
               </svg>
-              <span>Compartilhar</span>
             </button>
             <div data-share-menu class="share-popover hidden" role="menu">
               <button type="button" role="menuitem" class="share-option" data-share-to="whatsapp">
