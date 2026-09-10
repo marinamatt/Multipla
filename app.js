@@ -73,6 +73,7 @@ let searchDebounce = null;
 let searchSeq = 0;
 let composeObserver = null;
 let shareToastTimer = null;
+let sharedGlowTimer = null;
 let sharedHighlightDone = false;
 
 function announce(message) {
@@ -868,9 +869,20 @@ async function copyPostLink(postUrl) {
 }
 
 function closeShareMenu(card) {
-  const menu = card?.querySelector('[data-share-menu]');
   const btn = card?.querySelector('[data-share]');
-  if (menu) menu.classList.add('hidden');
+  const wrap = card?.querySelector('[data-share-wrap]');
+  const menuId = btn?.getAttribute('aria-controls');
+  const menu = (menuId && document.getElementById(menuId)) || card?.querySelector('[data-share-menu]');
+  card?.classList.remove('is-share-open');
+  if (card) card.style.zIndex = '';
+  if (menu) {
+    menu.classList.add('hidden');
+    menu.style.position = '';
+    menu.style.left = '';
+    menu.style.top = '';
+    menu.style.zIndex = '';
+    if (wrap && menu.parentElement !== wrap) wrap.appendChild(menu);
+  }
   if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 
@@ -881,12 +893,30 @@ function closeAllShareMenus(exceptCard = null) {
   });
 }
 
+function positionShareMenu(btn, menu) {
+  const rect = btn.getBoundingClientRect();
+  const width = menu.offsetWidth || 216;
+  let left = rect.left;
+  if (left + width > window.innerWidth - 8) {
+    left = Math.max(8, window.innerWidth - width - 8);
+  }
+  menu.style.position = 'fixed';
+  menu.style.left = `${Math.max(8, left)}px`;
+  menu.style.top = `${rect.bottom + 8}px`;
+  menu.style.bottom = 'auto';
+  menu.style.zIndex = '80';
+}
+
 function openShareMenu(card) {
   closeAllShareMenus(card);
+  card.classList.add('is-share-open');
   const menu = card.querySelector('[data-share-menu]');
   const btn = card.querySelector('[data-share]');
-  menu?.classList.remove('hidden');
-  btn?.setAttribute('aria-expanded', 'true');
+  if (!menu || !btn) return;
+  document.body.appendChild(menu);
+  menu.classList.remove('hidden');
+  btn.setAttribute('aria-expanded', 'true');
+  positionShareMenu(btn, menu);
 }
 
 function openShareUrl(url) {
@@ -946,52 +976,49 @@ function sharedPostIdFromUrl() {
   return id;
 }
 
-function highlightSharedPost(postId) {
+function highlightSharedPost(postId, animate = true) {
   const card = els.feed?.querySelector(`[data-post-card][data-post-id="${CSS.escape(postId)}"]`);
   if (!card) return false;
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (animate) {
+    card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    card.setAttribute('tabindex', '-1');
+    card.focus({ preventScroll: true });
+  }
   card.classList.add('is-shared-highlight');
-  card.setAttribute('tabindex', '-1');
-  card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-  card.focus({ preventScroll: true });
-  window.setTimeout(() => {
+  window.clearTimeout(sharedGlowTimer);
+  sharedGlowTimer = window.setTimeout(() => {
     card.classList.remove('is-shared-highlight');
   }, 3600);
   return true;
 }
 
 async function revealSharedPost() {
-  if (sharedHighlightDone) return;
   const postId = sharedPostIdFromUrl();
-  if (!postId) {
-    sharedHighlightDone = true;
-    return;
-  }
+  if (!postId) return;
 
   let post = state.posts.find((item) => item.id === postId) || state.postsBase.find((item) => item.id === postId);
   if (!post && state.supabase) {
     const { data, error } = await state.supabase.from('posts_feed').select('*').eq('id', postId).maybeSingle();
     if (error || !data) {
-      announce('Não foi possível abrir a proposta compartilhada.');
+      if (!sharedHighlightDone) announce('Não foi possível abrir a proposta compartilhada.');
       sharedHighlightDone = true;
       return;
     }
     post = data;
   }
 
-  if (!post) {
-    sharedHighlightDone = true;
-    return;
-  }
+  if (!post) return;
 
   if (!state.posts.some((item) => item.id === postId)) {
     state.posts = [post, ...state.posts.filter((item) => item.id !== postId)];
     renderFeed();
   }
 
+  const shouldAnimate = !sharedHighlightDone;
   sharedHighlightDone = true;
   requestAnimationFrame(() => {
-    highlightSharedPost(postId);
+    highlightSharedPost(postId, shouldAnimate);
   });
 }
 
@@ -1397,7 +1424,9 @@ function bindStaticEvents() {
   els.fabNewPost?.addEventListener('click', focusComposeToCreate);
   setupComposeObserver();
   document.addEventListener('click', (event) => {
-    if (!event.target.closest('[data-share-wrap]')) closeAllShareMenus();
+    if (!event.target.closest('[data-share-wrap]') && !event.target.closest('[data-share-menu]')) {
+      closeAllShareMenus();
+    }
     if (!els.headerSearch?.classList.contains('is-open')) return;
     if (els.headerSearch.contains(event.target)) return;
     setHeaderSearchOpen(false);
@@ -1405,6 +1434,7 @@ function bindStaticEvents() {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') closeAllShareMenus();
   });
+  window.addEventListener('resize', () => closeAllShareMenus());
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);

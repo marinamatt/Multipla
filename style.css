@@ -459,32 +459,45 @@ body.app-body::before {
 .share-popover {
   position: absolute;
   left: 0;
-  bottom: calc(100% + 0.4rem);
-  z-index: 40;
+  top: calc(100% + 0.45rem);
+  bottom: auto;
+  z-index: 50;
   display: flex;
   flex-direction: column;
   gap: 0.1rem;
-  min-width: 13.25rem;
+  min-width: 13.5rem;
   max-width: min(16rem, calc(100vw - 2rem));
-  padding: 0.4rem;
+  padding: 0.45rem;
   border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.48);
-  backdrop-filter: blur(25px) saturate(220%);
-  -webkit-backdrop-filter: blur(25px) saturate(220%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  isolation: isolate;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-    0 12px 32px rgba(31, 38, 135, 0.14);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
+    0 16px 36px rgba(31, 38, 135, 0.18);
 }
 
-.share-popover[hidden],
+body > .share-popover {
+  position: fixed;
+  z-index: 80;
+}
+
 .share-popover.hidden {
   display: none;
 }
 
+[data-post-card].is-share-open,
 [data-post-card]:has([data-share][aria-expanded="true"]) {
   position: relative;
-  z-index: 24;
+  z-index: 50;
+  isolation: isolate;
+}
+
+[data-post-card].is-share-open:hover,
+[data-post-card]:has([data-share][aria-expanded="true"]):hover {
+  transform: none;
 }
 
 .share-option {
@@ -501,6 +514,7 @@ body.app-body::before {
   color: var(--text-primary);
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
 }
 
 .share-option:hover,
@@ -529,17 +543,18 @@ body.app-body::before {
 .share-toast {
   position: fixed;
   left: 50%;
-  bottom: 1.5rem;
+  bottom: 2rem;
   z-index: 80;
-  padding: 0.7rem 1.15rem;
+  padding: 0.75rem 1.2rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 30px rgba(31, 38, 135, 0.16);
-  color: var(--text-primary);
+  background: rgba(29, 29, 31, 0.92);
+  color: #fff;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 12px 32px rgba(29, 29, 31, 0.28);
   font-size: 0.875rem;
+  font-weight: 500;
   transform: translate(-50%, 1rem);
   opacity: 0;
   pointer-events: none;
@@ -567,8 +582,12 @@ body.app-body::before {
 }
 
 .liquid-card.is-shared-highlight {
-  outline: 2px solid rgba(63, 94, 251, 0.55);
-  outline-offset: 4px;
+  outline: 3px solid rgba(45, 91, 255, 0.72);
+  outline-offset: 5px;
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
+    0 0 0 6px rgba(63, 94, 251, 0.2),
+    0 0 44px 12px rgba(36, 198, 220, 0.42);
   animation: shared-glow 1.15s ease-in-out 3;
 }
 
@@ -623,6 +642,11 @@ body.app-body::before {
 .feed-grid {
   display: grid;
   gap: 1.15rem;
+}
+
+#feed > [data-post-card] {
+  position: relative;
+  z-index: 1;
 }
 
 .feed-search-block {
