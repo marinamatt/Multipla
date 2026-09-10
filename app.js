@@ -24,6 +24,8 @@ const state = {
   posts: [],
   postsBase: [],
   commentsByPost: new Map(),
+  subscriptions: new Map(),
+  notifications: [],
   filterType: 'todos',
   sort: 'recentes',
   topicFilter: null,
@@ -65,6 +67,12 @@ const els = {
   headerSearch: document.getElementById('header-search'),
   searchToggle: document.getElementById('search-toggle'),
   moderationAlert: document.getElementById('moderation-alert'),
+  notifyWrap: document.getElementById('notify-wrap'),
+  notifyBell: document.getElementById('notify-bell'),
+  notifyBadge: document.getElementById('notify-badge'),
+  notifyMenu: document.getElementById('notify-menu'),
+  followDialog: document.getElementById('follow-dialog'),
+  accountDialog: document.getElementById('account-dialog'),
 };
 
 let cauPromptShown = false;
@@ -75,6 +83,8 @@ let composeObserver = null;
 let shareToastTimer = null;
 let sharedGlowTimer = null;
 let sharedHighlightDone = false;
+let followTarget = null;
+let notifyPoll = null;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -371,6 +381,7 @@ function renderAuth() {
     els.composeBar.classList.add('hidden');
     syncComposeLock();
     refreshComposeFab();
+    syncNotifyBell();
     return;
   }
 
@@ -394,15 +405,16 @@ function renderAuth() {
         <p class="user-name">${escapeHtml(name)}</p>
         ${adminTag}
       </div>
-      <button type="button" id="btn-delete-mine" class="btn-text">Excluir minhas contribuições</button>
+      <button type="button" id="btn-account" class="btn btn-ghost">Minha conta</button>
       <button type="button" id="btn-logout" class="btn btn-ghost">Sair</button>
     </div>
   `;
   document.getElementById('btn-logout')?.addEventListener('click', signOut);
-  document.getElementById('btn-delete-mine')?.addEventListener('click', deleteMyContributions);
+  document.getElementById('btn-account')?.addEventListener('click', openAccountSettings);
   els.composeBar.classList.remove('hidden');
   syncComposeLock();
   refreshComposeFab();
+  syncNotifyBell();
 }
 
 function escapeHtml(value) {
@@ -1100,6 +1112,11 @@ function renderCard(post) {
   deleteOwn.addEventListener('click', () => deletePost(post.id, false));
   adminActions.querySelector('[data-admin-delete]')?.addEventListener('click', () => deletePost(post.id, true));
   commentForm.addEventListener('submit', (event) => submitComment(event, post.id, node));
+  const followBtn = node.querySelector('[data-follow]');
+  if (followBtn) {
+    syncFollowButton(followBtn, post.id);
+    followBtn.addEventListener('click', () => openFollowDialog(post));
+  }
   return node;
 }
 
@@ -1155,42 +1172,116 @@ async function renderComments(postId, card) {
       list.innerHTML = `<p class="text-sm text-ink/70">Nenhum comentário ainda.</p>`;
       return;
     }
-    list.innerHTML = comments
-      .map((comment) => {
-        const hiddenNote = comment.is_hidden ? ' <span class="admin-tag">Oculto</span>' : '';
-        const ownBtn = comment.is_own
-          ? `<button type="button" class="btn-text" data-del-comment="${comment.id}">Excluir</button>`
-          : '';
-        const hideBtn = isAdmin()
-          ? `<button type="button" class="btn-text" data-hide-comment="${comment.id}" data-hidden="${comment.is_hidden}">${comment.is_hidden ? 'Reexibir' : 'Ocultar'}</button>`
-          : '';
-        const reportBtn = state.user
-          ? `<button type="button" class="btn-text" data-report-comment="${comment.id}">Denunciar</button>`
-          : '';
-        return `
-          <article class="liquid-card comment-item ${comment.is_hidden ? 'opacity-70' : ''}">
-            <p class="meta"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${comment.created_at}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
-            <p class="mt-1 whitespace-pre-wrap text-sm">${escapeHtml(comment.content)}</p>
-            <div class="mt-2 flex gap-3">${ownBtn}${hideBtn}${reportBtn}</div>
-          </article>
-        `;
-      })
-      .join('');
-
-    list.querySelectorAll('[data-del-comment]').forEach((btn) => {
-      btn.addEventListener('click', () => deleteComment(btn.getAttribute('data-del-comment'), postId, card));
-    });
-    list.querySelectorAll('[data-hide-comment]').forEach((btn) => {
-      btn.addEventListener('click', () =>
-        hideComment(btn.getAttribute('data-hide-comment'), btn.getAttribute('data-hidden') === 'true', postId, card),
-      );
-    });
-    list.querySelectorAll('[data-report-comment]').forEach((btn) => {
-      btn.addEventListener('click', () => openReport({ commentId: btn.getAttribute('data-report-comment') }));
-    });
+    const tree = nestComments(comments);
+    list.innerHTML = `<div class="comment-thread">${tree.map((comment) => renderCommentNode(comment, true)).join('')}</div>`;
+    bindCommentListEvents(list, postId, card);
   } catch (error) {
     list.innerHTML = `<p class="feedback-error">${escapeHtml(error.message)}</p>`;
   }
+}
+
+function nestComments(comments) {
+  const nodes = new Map((comments || []).map((item) => [item.id, { ...item, replies: [] }]));
+  const roots = [];
+  for (const item of comments || []) {
+    const node = nodes.get(item.id);
+    if (item.parent_id && nodes.has(item.parent_id)) {
+      const parent = nodes.get(item.parent_id);
+      if (parent.parent_id && nodes.has(parent.parent_id)) {
+        nodes.get(parent.parent_id).replies.push(node);
+      } else {
+        parent.replies.push(node);
+      }
+    } else {
+      roots.push(node);
+    }
+  }
+  return roots;
+}
+
+function commentActionButtons(comment, allowReply) {
+  const ownBtn = comment.is_own
+    ? `<button type="button" class="btn-text" data-del-comment="${comment.id}">Excluir</button>`
+    : '';
+  const hideBtn = isAdmin()
+    ? `<button type="button" class="btn-text" data-hide-comment="${comment.id}" data-hidden="${comment.is_hidden}">${comment.is_hidden ? 'Reexibir' : 'Ocultar'}</button>`
+    : '';
+  const reportBtn = state.user
+    ? `<button type="button" class="btn-text" data-report-comment="${comment.id}">Denunciar</button>`
+    : '';
+  const replyBtn = allowReply
+    ? `<button type="button" class="btn-text" data-reply="${comment.id}">Responder</button>`
+    : '';
+  return `${replyBtn}${ownBtn}${hideBtn}${reportBtn}`;
+}
+
+function renderCommentNode(comment, allowReply) {
+  const hiddenNote = comment.is_hidden ? ' <span class="admin-tag">Oculto</span>' : '';
+  const replies = (comment.replies || [])
+    .map((reply) => renderCommentNode(reply, false))
+    .join('');
+  const replyForm = allowReply
+    ? `<form class="reply-form hidden" data-reply-form data-parent-id="${comment.id}">
+        <label class="sr-only">Responder</label>
+        <textarea class="glass-textarea" data-reply-input minlength="3" maxlength="800" rows="2" required placeholder="Escreva uma resposta…"></textarea>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" data-reply-anon />
+          Responder como anônimo
+        </label>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary">Responder</button>
+          <button type="button" class="btn-text" data-reply-cancel>Cancelar</button>
+        </div>
+        <p class="meta" data-reply-feedback></p>
+      </form>`
+    : '';
+  return `
+    <article class="liquid-card comment-item ${allowReply ? '' : 'comment-reply'} ${comment.is_hidden ? 'opacity-70' : ''}" data-comment-id="${comment.id}">
+      <p class="meta"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${comment.created_at}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
+      <p class="mt-1 whitespace-pre-wrap text-sm">${escapeHtml(comment.content)}</p>
+      <div class="comment-actions">${commentActionButtons(comment, allowReply)}</div>
+      ${replyForm}
+      ${replies ? `<div class="comment-replies">${replies}</div>` : ''}
+    </article>
+  `;
+}
+
+function bindCommentListEvents(list, postId, card) {
+  list.querySelectorAll('[data-del-comment]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteComment(btn.getAttribute('data-del-comment'), postId, card));
+  });
+  list.querySelectorAll('[data-hide-comment]').forEach((btn) => {
+    btn.addEventListener('click', () =>
+      hideComment(btn.getAttribute('data-hide-comment'), btn.getAttribute('data-hidden') === 'true', postId, card),
+    );
+  });
+  list.querySelectorAll('[data-report-comment]').forEach((btn) => {
+    btn.addEventListener('click', () => openReport({ commentId: btn.getAttribute('data-report-comment') }));
+  });
+  list.querySelectorAll('[data-reply]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (!state.user) {
+        openLogin();
+        return;
+      }
+      const article = btn.closest('[data-comment-id]');
+      const form = article?.querySelector('[data-reply-form]');
+      if (!form) return;
+      const open = !form.classList.contains('hidden');
+      list.querySelectorAll('[data-reply-form]').forEach((other) => other.classList.add('hidden'));
+      if (open) return;
+      form.classList.remove('hidden');
+      form.querySelector('[data-reply-input]')?.focus();
+    });
+  });
+  list.querySelectorAll('[data-reply-cancel]').forEach((btn) => {
+    btn.addEventListener('click', () => btn.closest('[data-reply-form]')?.classList.add('hidden'));
+  });
+  list.querySelectorAll('[data-reply-form]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+      submitComment(event, postId, card, form.getAttribute('data-parent-id'));
+    });
+  });
 }
 
 async function submitPost(event) {
@@ -1243,12 +1334,13 @@ async function submitPost(event) {
   await loadTrendingTopics();
 }
 
-async function submitComment(event, postId, card) {
+async function submitComment(event, postId, card, parentId = null) {
   event.preventDefault();
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
-  const feedback = card.querySelector('[data-comment-feedback]');
-  const content = form.querySelector('[data-comment-input]').value.trim();
+  const feedback =
+    form.querySelector('[data-reply-feedback]') || card.querySelector('[data-comment-feedback]');
+  const content = (form.querySelector('[data-reply-input], [data-comment-input]')?.value || '').trim();
   const limitesComentario = { min: MIN_CHARS, max: MAX_CHARS_COMENTARIO };
   if (motivoRetencao(content, limitesComentario)) {
     reterConteudo(feedback, content, limitesComentario);
@@ -1261,12 +1353,14 @@ async function submitComment(event, postId, card) {
     return;
   }
   await recordConsent();
-  const { error } = await state.supabase.from('comments').insert({
+  const payload = {
     post_id: postId,
     content,
-    is_anonymous: form.querySelector('[data-comment-anon]').checked,
+    is_anonymous: form.querySelector('[data-comment-anon], [data-reply-anon]')?.checked || false,
     lgpd_consent: true,
-  });
+  };
+  if (parentId) payload.parent_id = parentId;
+  const { error } = await state.supabase.from('comments').insert(payload);
   if (error) {
     showFeedback(feedback, error.message, true);
     return;
@@ -1274,10 +1368,314 @@ async function submitComment(event, postId, card) {
   markSubmitted();
   hideModerationAlert();
   form.reset();
-  showFeedback(feedback, 'Comentário publicado.');
+  showFeedback(feedback, parentId ? 'Resposta publicada.' : 'Comentário publicado.');
   await renderComments(postId, card);
   await loadPosts();
   await loadTrendingTopics();
+  await loadNotifications();
+}
+
+function subscriptionFor(postId) {
+  return state.subscriptions.get(postId) || null;
+}
+
+function syncFollowButton(button, postId) {
+  if (!button) return;
+  const sub = subscriptionFor(postId);
+  const following = Boolean(sub);
+  button.setAttribute('aria-pressed', String(following));
+  const label = button.querySelector('[data-follow-label]');
+  if (label) label.textContent = following ? 'Seguindo' : 'Seguir Debate';
+}
+
+function syncFollowButtons() {
+  document.querySelectorAll('[data-follow]').forEach((btn) => {
+    const card = btn.closest('[data-post-card]');
+    if (card?.dataset.postId) syncFollowButton(btn, card.dataset.postId);
+  });
+}
+
+function openFollowDialog(post) {
+  if (!state.user) {
+    openLogin();
+    return;
+  }
+  followTarget = post;
+  const sub = subscriptionFor(post.id);
+  const title = document.getElementById('follow-title');
+  const message = document.getElementById('follow-message');
+  const emailBtn = document.getElementById('follow-email');
+  const siteBtn = document.getElementById('follow-site');
+  if (sub) {
+    if (title) title.textContent = 'Você já segue este debate';
+    if (message) {
+      message.textContent = sub.notify_email
+        ? 'Avisos no site estão ativos e o e-mail deste debate está ligado. Você pode desativar só o e-mail ou deixar de seguir.'
+        : 'Avisos no site estão ativos. Você pode passar a receber e-mail ou deixar de seguir.';
+    }
+    if (emailBtn) emailBtn.textContent = sub.notify_email ? 'Desativar e-mails deste debate' : 'Sim, enviar e-mails';
+    if (siteBtn) siteBtn.textContent = 'Deixar de seguir';
+  } else {
+    if (title) title.textContent = 'Seguir debate';
+    if (message) {
+      message.textContent =
+        'Deseja receber notificações por e-mail quando houver novas respostas neste debate?';
+    }
+    if (emailBtn) emailBtn.textContent = 'Sim, enviar e-mails';
+    if (siteBtn) siteBtn.textContent = 'Apenas no site';
+  }
+  els.followDialog?.showModal();
+}
+
+async function confirmFollowChoice(wantEmail) {
+  const post = followTarget;
+  if (!post) return;
+  const sub = subscriptionFor(post.id);
+  try {
+    if (sub && wantEmail && sub.notify_email) {
+      await state.supabase.rpc('set_subscription_email', { p_post_id: post.id, p_notify_email: false });
+      announce('E-mails deste debate desativados.');
+    } else if (sub && !wantEmail) {
+      await state.supabase.rpc('unsubscribe_from_post', { p_post_id: post.id });
+      announce('Você deixou de seguir o debate.');
+    } else {
+      const { error } = await state.supabase.rpc('subscribe_to_post', {
+        p_post_id: post.id,
+        p_notify_email: Boolean(wantEmail),
+      });
+      if (error) throw error;
+      announce(wantEmail ? 'Você segue o debate e aceitou e-mails.' : 'Você segue o debate só no site.');
+    }
+    await loadSubscriptions();
+    syncFollowButtons();
+  } catch (error) {
+    announce(error.message || 'Não foi possível atualizar o acompanhamento.');
+  } finally {
+    els.followDialog?.close();
+    followTarget = null;
+  }
+}
+
+async function loadSubscriptions() {
+  if (!state.user || !state.supabase) {
+    state.subscriptions = new Map();
+    return;
+  }
+  const { data, error } = await state.supabase.rpc('list_my_subscriptions');
+  if (error) {
+    state.subscriptions = new Map();
+    return;
+  }
+  state.subscriptions = new Map((data || []).map((row) => [row.post_id, row]));
+}
+
+function inAppNotificationsEnabled() {
+  if (!state.profile) return true;
+  if (!Object.prototype.hasOwnProperty.call(state.profile, 'notify_in_app')) return true;
+  return Boolean(state.profile.notify_in_app);
+}
+
+function syncNotifyBell() {
+  const show = Boolean(state.user) && inAppNotificationsEnabled();
+  els.notifyWrap?.classList.toggle('hidden', !show);
+  if (!show) {
+    els.notifyMenu?.classList.add('hidden');
+    els.notifyBell?.setAttribute('aria-expanded', 'false');
+  }
+  const unread = (state.notifications || []).filter((item) => !item.read_at).length;
+  if (els.notifyBadge) {
+    els.notifyBadge.textContent = unread > 99 ? '99+' : String(unread);
+    els.notifyBadge.classList.toggle('hidden', unread === 0 || !show);
+  }
+}
+
+function renderNotifyMenu() {
+  const menu = els.notifyMenu;
+  if (!menu) return;
+  const items = state.notifications || [];
+  if (!items.length) {
+    menu.innerHTML = `<p class="notify-empty">Nenhuma notificação por enquanto.</p>`;
+    return;
+  }
+  menu.innerHTML = items
+    .map(
+      (item) => `
+      <button type="button" class="notify-item ${item.read_at ? '' : 'is-unread'}" data-notify-id="${item.id}" data-post-id="${item.post_id || ''}" role="menuitem">
+        ${escapeHtml(item.message)}
+        <span class="meta" style="display:block;margin-top:0.25rem">${formatDate(item.created_at)}</span>
+      </button>
+    `,
+    )
+    .join('');
+}
+
+function closeNotifyMenu() {
+  els.notifyMenu?.classList.add('hidden');
+  els.notifyBell?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleNotifyMenu() {
+  if (!state.user) {
+    openLogin();
+    return;
+  }
+  const open = !els.notifyMenu?.classList.contains('hidden');
+  if (open) {
+    closeNotifyMenu();
+    return;
+  }
+  renderNotifyMenu();
+  els.notifyMenu?.classList.remove('hidden');
+  els.notifyBell?.setAttribute('aria-expanded', 'true');
+  loadNotifications();
+}
+
+async function loadNotifications() {
+  if (!state.user || !state.supabase) {
+    state.notifications = [];
+    syncNotifyBell();
+    return;
+  }
+  const { data, error } = await state.supabase
+    .from('notifications_mine')
+    .select('id, type, post_id, comment_id, message, read_at, created_at')
+    .order('created_at', { ascending: false })
+    .limit(30);
+  if (error) {
+    state.notifications = [];
+    syncNotifyBell();
+    return;
+  }
+  state.notifications = data || [];
+  syncNotifyBell();
+  if (els.notifyMenu && !els.notifyMenu.classList.contains('hidden')) renderNotifyMenu();
+}
+
+async function openNotification(item) {
+  if (!item?.id) return;
+  await state.supabase.rpc('mark_notification_read', { p_id: item.id }).catch(() => {});
+  item.read_at = new Date().toISOString();
+  closeNotifyMenu();
+  await loadNotifications();
+  if (item.post_id) await focusPost(item.post_id, true);
+}
+
+async function focusPost(postId, openComments) {
+  sharedHighlightDone = false;
+  const params = new URLSearchParams(window.location.search);
+  params.set('post', postId);
+  const next = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState({}, '', next);
+  await revealSharedPost();
+  if (!openComments) return;
+  const card = els.feed?.querySelector(`[data-post-card][data-post-id="${CSS.escape(postId)}"]`);
+  const toggle = card?.querySelector('[data-toggle-comments]');
+  if (toggle && toggle.getAttribute('aria-expanded') !== 'true') {
+    await toggleComments(postId, card, toggle);
+  }
+}
+
+function startNotifyPoll() {
+  stopNotifyPoll();
+  if (!state.user) return;
+  notifyPoll = window.setInterval(() => {
+    loadNotifications();
+  }, 45000);
+}
+
+function stopNotifyPoll() {
+  if (notifyPoll) {
+    clearInterval(notifyPoll);
+    notifyPoll = null;
+  }
+}
+
+async function openAccountSettings() {
+  if (!state.user) {
+    openLogin();
+    return;
+  }
+  const email = document.getElementById('pref-allow-email');
+  const inApp = document.getElementById('pref-in-app');
+  if (email) email.checked = state.profile?.allow_email_notifications !== false;
+  if (inApp) inApp.checked = state.profile?.notify_in_app !== false;
+  await loadSubscriptions();
+  renderFollowedList();
+  els.accountDialog?.showModal();
+}
+
+function renderFollowedList() {
+  const box = document.getElementById('followed-list');
+  if (!box) return;
+  const rows = [...state.subscriptions.values()];
+  if (!rows.length) {
+    box.innerHTML = `<p class="meta">Você ainda não segue nenhum debate.</p>`;
+    return;
+  }
+  box.innerHTML = rows
+    .map(
+      (row) => `
+      <article class="followed-item">
+        <p class="text-sm" style="margin:0">${escapeHtml(row.post_title || 'Proposta')}</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="btn-text" data-sub-email="${row.post_id}" data-on="${row.notify_email ? '1' : '0'}">
+            ${row.notify_email ? 'Desativar e-mails deste debate' : 'Ativar e-mails deste debate'}
+          </button>
+          <button type="button" class="btn-text" data-sub-unfollow="${row.post_id}">Deixar de seguir</button>
+        </div>
+      </article>
+    `,
+    )
+    .join('');
+}
+
+async function saveNotificationPrefs() {
+  const allowEmail = document.getElementById('pref-allow-email')?.checked !== false;
+  const notifyInApp = document.getElementById('pref-in-app')?.checked !== false;
+  const { error } = await state.supabase.rpc('set_notification_prefs', {
+    p_allow_email: allowEmail,
+    p_notify_in_app: notifyInApp,
+  });
+  if (error) {
+    announce(error.message || 'Não foi possível salvar as preferências.');
+    return;
+  }
+  state.profile = {
+    ...(state.profile || {}),
+    allow_email_notifications: allowEmail,
+    notify_in_app: notifyInApp,
+  };
+  syncNotifyBell();
+  announce('Preferências atualizadas.');
+}
+
+async function handleFollowedListClick(event) {
+  const unfollow = event.target.closest('[data-sub-unfollow]');
+  const emailBtn = event.target.closest('[data-sub-email]');
+  try {
+    if (unfollow) {
+      const { error } = await state.supabase.rpc('unsubscribe_from_post', {
+        p_post_id: unfollow.getAttribute('data-sub-unfollow'),
+      });
+      if (error) throw error;
+      announce('Você deixou de seguir o debate.');
+    } else if (emailBtn) {
+      const on = emailBtn.getAttribute('data-on') === '1';
+      const { error } = await state.supabase.rpc('set_subscription_email', {
+        p_post_id: emailBtn.getAttribute('data-sub-email'),
+        p_notify_email: !on,
+      });
+      if (error) throw error;
+      announce(on ? 'E-mails deste debate desativados.' : 'E-mails deste debate ativados.');
+    } else {
+      return;
+    }
+    await loadSubscriptions();
+    renderFollowedList();
+    syncFollowButtons();
+  } catch (error) {
+    announce(error.message || 'Não foi possível atualizar o debate.');
+  }
 }
 
 async function deletePost(postId, asAdmin) {
@@ -1285,7 +1683,7 @@ async function deletePost(postId, asAdmin) {
     asAdmin ? 'Deletar post (moderação)' : 'Excluir publicação',
     asAdmin
       ? 'Esta publicação será removida do debate. A ação é irreversível.'
-      : 'Você está exercendo o direito de eliminação (art. 18 da LGPD). Continuar?',
+      : 'Você está exercendo o direito de eliminação (art. 18 da LGPD). Esta ação é irreversível, deseja continuar?',
   );
   if (!ok) return;
   const { error } = await state.supabase.rpc('delete_post', { p_id: postId });
@@ -1389,9 +1787,12 @@ async function onAuthChange(session) {
   }
   renderAuth();
   maybePromptCau();
+  await loadSubscriptions();
   await loadPosts();
   await loadReports();
   await loadTrendingTopics();
+  await loadNotifications();
+  startNotifyPoll();
 }
 
 function bindStaticEvents() {
@@ -1427,14 +1828,39 @@ function bindStaticEvents() {
     if (!event.target.closest('[data-share-wrap]') && !event.target.closest('[data-share-menu]')) {
       closeAllShareMenus();
     }
+    if (!event.target.closest('#notify-wrap')) closeNotifyMenu();
     if (!els.headerSearch?.classList.contains('is-open')) return;
     if (els.headerSearch.contains(event.target)) return;
     setHeaderSearchOpen(false);
   });
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeAllShareMenus();
+    if (event.key === 'Escape') {
+      closeAllShareMenus();
+      closeNotifyMenu();
+    }
   });
   window.addEventListener('resize', () => closeAllShareMenus());
+  els.notifyBell?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleNotifyMenu();
+  });
+  els.notifyMenu?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-notify-id]');
+    if (!btn) return;
+    const item = (state.notifications || []).find((row) => row.id === btn.getAttribute('data-notify-id'));
+    if (item) openNotification(item);
+  });
+  document.getElementById('follow-email')?.addEventListener('click', () => confirmFollowChoice(true));
+  document.getElementById('follow-site')?.addEventListener('click', () => confirmFollowChoice(false));
+  document.getElementById('follow-cancel')?.addEventListener('click', () => {
+    els.followDialog?.close();
+    followTarget = null;
+  });
+  document.getElementById('account-close')?.addEventListener('click', () => els.accountDialog?.close());
+  document.getElementById('pref-allow-email')?.addEventListener('change', saveNotificationPrefs);
+  document.getElementById('pref-in-app')?.addEventListener('change', saveNotificationPrefs);
+  document.getElementById('followed-list')?.addEventListener('click', handleFollowedListClick);
+  document.getElementById('btn-delete-mine')?.addEventListener('click', deleteMyContributions);
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());
   document.getElementById('btn-open-cau')?.addEventListener('click', openCauModal);

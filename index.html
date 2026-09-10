@@ -84,6 +84,25 @@
               <button type="button" id="search-clear" class="search-clear hidden" aria-label="Limpar busca">×</button>
             </form>
           </div>
+          <div class="header-notify hidden" id="notify-wrap">
+            <button
+              type="button"
+              id="notify-bell"
+              class="notify-bell"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Notificações"
+            >
+              <svg class="notify-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm8-6.2v-5.1c0-3.3-1.8-6.1-5-6.8V3.4A2.4 2.4 0 0 0 12.6 1h-1.2A2.4 2.4 0 0 0 9 3.4v.5c-3.2.7-5 3.5-5 6.8v5.1L2.4 17.4v1.1h19.2v-1.1L20 15.8Z"
+                />
+              </svg>
+              <span id="notify-badge" class="notify-badge hidden">0</span>
+            </button>
+            <div id="notify-menu" class="notify-menu hidden" role="menu"></div>
+          </div>
           <div class="auth-slot" id="auth-slot">
             <div class="h-8 w-36 animate-pulse rounded-full bg-white/40" aria-hidden="true"></div>
           </div>
@@ -133,14 +152,8 @@
                 <input id="post-anonymous" type="checkbox" class="mt-1" />
                 <span>Publicar como anônimo <span class="meta">(exibe “Arquiteto(a) Anônimo(a)”)</span></span>
               </label>
-              <p class="meta" style="margin: 0">
-                O aceite da LGPD é feito uma vez, no cadastro do registro CAU.
-              </p>
             </div>
             <p id="post-feedback" class="meta" style="grid-column: 1 / -1" role="status"></p>
-            <p class="hashtag-hint" style="grid-column: 1 / -1">
-              Use hashtags nas suas mensagens (ex: #ATHIS, #Fiscalização, #TabelaDeHonorários, #JovensArquitetos) para incluir seu post nos Tópicos em Alta.
-            </p>
           </form>
             <div id="compose-lock" class="compose-lock hidden">
               <p>Para publicar, informe o registro no CAU e aceite o Termo de Consentimento e Política de Privacidade (LGPD).</p>
@@ -193,9 +206,6 @@
         <section class="liquid-card trending-card p-5 mb-6" aria-labelledby="trending-title">
           <p class="trending-kicker">Em alta na categoria</p>
           <h2 id="trending-title" class="card-title">Tópicos mais comentados</h2>
-          <p class="hashtag-hint">
-            Use hashtags nas suas mensagens (ex: #ATHIS, #Fiscalização, #TabelaDeHonorários, #JovensArquitetos) para incluir seu post nos Tópicos em Alta.
-          </p>
           <div id="trending-topics-list" class="topic-list">
             <span class="meta">Carregando tópicos…</span>
           </div>
@@ -383,6 +393,56 @@
       </form>
     </dialog>
 
+    <dialog id="follow-dialog" class="liquid-card dialog-sheet" aria-labelledby="follow-title">
+      <div class="space-y-4">
+        <h2 id="follow-title" class="card-title">Seguir debate</h2>
+        <p id="follow-message" class="lede">
+          Deseja receber notificações por e-mail quando houver novas respostas neste debate?
+        </p>
+        <p class="meta">
+          E-mails só são enviados se você aceitar aqui. O aviso no site continua disponível no sino.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="follow-email" class="btn btn-primary">Sim, enviar e-mails</button>
+          <button type="button" id="follow-site" class="btn btn-ghost">Apenas no site</button>
+          <button type="button" id="follow-cancel" class="btn-text">Cancelar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="account-dialog" class="liquid-card dialog-sheet settings-sheet" aria-labelledby="account-title">
+      <div class="settings-sheet-body">
+        <h2 id="account-title" class="title-xl" style="font-size: 1.45rem">Minha conta / Configurações</h2>
+        <section class="settings-section" aria-labelledby="settings-notify-title">
+          <h3 id="settings-notify-title" class="card-title">Notificações e privacidade</h3>
+          <label class="pref-switch">
+            <input type="checkbox" id="pref-allow-email" />
+            <span class="pref-switch-ui" aria-hidden="true"></span>
+            <span>
+              <strong>Notificações por e-mail</strong>
+              <span class="meta">Mesmo ligado, cada debate só envia e-mail se você aceitar em Seguir Debate. Desligue para recusar qualquer e-mail da plataforma (opt-out mestre).</span>
+            </span>
+          </label>
+          <label class="pref-switch">
+            <input type="checkbox" id="pref-in-app" />
+            <span class="pref-switch-ui" aria-hidden="true"></span>
+            <span>
+              <strong>Notificações no site</strong>
+              <span class="meta">Avisos visuais de respostas nos seus posts e debates seguidos.</span>
+            </span>
+          </label>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-follows-title">
+          <h3 id="settings-follows-title" class="card-title">Debates seguidos</h3>
+          <div id="followed-list" class="followed-list"></div>
+        </section>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-delete-mine" class="btn-text">Excluir minhas contribuições</button>
+          <button type="button" id="account-close" class="btn btn-primary">Fechar</button>
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="report-dialog" class="liquid-card dialog-sheet" aria-labelledby="report-title">
       <form id="report-form" class="space-y-4">
         <h2 id="report-title" class="card-title">Denunciar conteúdo</h2>
@@ -403,10 +463,21 @@
       <article class="liquid-card p-6" data-post-card>
         <div class="mb-4 flex items-center justify-between gap-3">
           <span data-badge class="badge"></span>
-          <span class="meta">
-            Postado por: <span data-author></span>
-            · <time data-date></time>
-          </span>
+          <div class="card-top-meta">
+            <button type="button" data-follow class="btn-follow" aria-pressed="false">
+              <svg class="follow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm8-6.2v-5.1c0-3.3-1.8-6.1-5-6.8V3.4A2.4 2.4 0 0 0 12.6 1h-1.2A2.4 2.4 0 0 0 9 3.4v.5c-3.2.7-5 3.5-5 6.8v5.1L2.4 17.4v1.1h19.2v-1.1L20 15.8Z"
+                />
+              </svg>
+              <span data-follow-label>Seguir Debate</span>
+            </button>
+            <span class="meta">
+              Postado por: <span data-author></span>
+              · <time data-date></time>
+            </span>
+          </div>
         </div>
         <div class="mb-3 flex justify-end" data-admin-actions></div>
         <p data-content class="card-body"></p>
