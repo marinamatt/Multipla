@@ -90,6 +90,7 @@ body.app-body::before {
   position: sticky;
   top: 0;
   z-index: 40;
+  overflow: visible;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   background: rgba(255, 255, 255, 0.38);
@@ -996,10 +997,10 @@ body > .share-popover {
   right: 0;
   top: calc(100% + 0.45rem);
   z-index: 70;
-  width: min(18.5rem, calc(100vw - 1.5rem));
+  width: min(17.5rem, calc(100vw - 1.5rem));
   padding: 0.4rem;
   border-radius: 1.05rem;
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.72);
