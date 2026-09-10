@@ -47,6 +47,7 @@ const els = {
   reportsList: document.getElementById('reports-list'),
   configBanner: document.getElementById('config-banner'),
   liveRegion: document.getElementById('live-region'),
+  shareToast: document.getElementById('share-toast'),
   loginDialog: document.getElementById('login-dialog'),
   loginForm: document.getElementById('login-form'),
   confirmDialog: document.getElementById('confirm-dialog'),
@@ -71,6 +72,8 @@ let cauSaveInFlight = false;
 let searchDebounce = null;
 let searchSeq = 0;
 let composeObserver = null;
+let shareToastTimer = null;
+let sharedHighlightDone = false;
 
 function announce(message) {
   els.liveRegion.textContent = message;
@@ -486,6 +489,7 @@ async function loadPosts() {
   applyLocalSearch();
   if (state.searchTerm) await searchRemote();
   syncTopicButtons();
+  await revealSharedPost();
 }
 
 async function fetchFeedPosts(searchTerm = '') {
@@ -791,6 +795,206 @@ async function loadReports() {
     .join('');
 }
 
+function shareTitleFromPost(post) {
+  const fromTitle = String(post?.title || '').trim();
+  if (fromTitle) return fromTitle.slice(0, 120);
+  const fromContent = String(post?.content || '').trim();
+  if (fromContent) return fromContent.slice(0, 80);
+  return 'Proposta no Múltiplas';
+}
+
+function postShareUrl(postId) {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('post', postId);
+  return url.toString();
+}
+
+function canUseNativeShare() {
+  if (typeof navigator.share !== 'function') return false;
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  const mobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  return coarse || mobileUa;
+}
+
+function socialShareUrls(postId, postTitle) {
+  const title = String(postTitle || 'Proposta no Múltiplas').trim() || 'Proposta no Múltiplas';
+  const postUrl = postShareUrl(postId);
+  return {
+    postUrl,
+    whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(
+      `Confira esta proposta para o CAU/SC no Múltiplas: "${title}" ${postUrl}`,
+    )}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      `Proposta no Múltiplas: ${title}`,
+    )}&url=${encodeURIComponent(postUrl)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`,
+  };
+}
+
+function showShareToast(message) {
+  const toast = els.shareToast;
+  if (toast) {
+    toast.textContent = message;
+    toast.classList.add('is-visible');
+    clearTimeout(shareToastTimer);
+    shareToastTimer = window.setTimeout(() => {
+      toast.classList.remove('is-visible');
+    }, 2600);
+  }
+  announce(message);
+}
+
+async function copyPostLink(postUrl) {
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error('clipboard');
+    await navigator.clipboard.writeText(postUrl);
+    showShareToast('Link copiado para a área de transferência!');
+  } catch {
+    const input = document.createElement('textarea');
+    input.value = postUrl;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    const ok = document.execCommand('copy');
+    input.remove();
+    if (ok) {
+      showShareToast('Link copiado para a área de transferência!');
+    } else {
+      announce('Não foi possível copiar o link.');
+    }
+  }
+}
+
+function closeShareMenu(card) {
+  const menu = card?.querySelector('[data-share-menu]');
+  const btn = card?.querySelector('[data-share]');
+  if (menu) menu.classList.add('hidden');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function closeAllShareMenus(exceptCard = null) {
+  els.feed?.querySelectorAll('[data-post-card]').forEach((card) => {
+    if (exceptCard && card === exceptCard) return;
+    closeShareMenu(card);
+  });
+}
+
+function openShareMenu(card) {
+  closeAllShareMenus(card);
+  const menu = card.querySelector('[data-share-menu]');
+  const btn = card.querySelector('[data-share]');
+  menu?.classList.remove('hidden');
+  btn?.setAttribute('aria-expanded', 'true');
+}
+
+function openShareUrl(url) {
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+async function sharePost(postId, postTitle, channel) {
+  const urls = socialShareUrls(postId, postTitle);
+  if (!channel && canUseNativeShare()) {
+    try {
+      await navigator.share({
+        title: 'Múltiplas — CAU/SC',
+        text: `Confira esta proposta para o CAU/SC no Múltiplas: "${postTitle}"`,
+        url: urls.postUrl,
+      });
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        const card = els.feed?.querySelector(`[data-post-card][data-post-id="${CSS.escape(String(postId))}"]`);
+        if (card) openShareMenu(card);
+      }
+    }
+    return urls;
+  }
+
+  if (channel === 'whatsapp') {
+    openShareUrl(urls.whatsapp);
+  } else if (channel === 'twitter' || channel === 'x') {
+    openShareUrl(urls.twitter);
+  } else if (channel === 'linkedin') {
+    openShareUrl(urls.linkedin);
+  } else if (channel === 'copy') {
+    await copyPostLink(urls.postUrl);
+  }
+
+  return urls;
+}
+
+function onShareButtonClick(event, post, card) {
+  event.preventDefault();
+  event.stopPropagation();
+  const btn = event.currentTarget;
+  const wasOpen = btn.getAttribute('aria-expanded') === 'true';
+  closeAllShareMenus();
+  if (wasOpen) return;
+  if (canUseNativeShare()) {
+    sharePost(post.id, shareTitleFromPost(post));
+    return;
+  }
+  openShareMenu(card);
+}
+
+function sharedPostIdFromUrl() {
+  const id = new URLSearchParams(window.location.search).get('post');
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return null;
+  }
+  return id;
+}
+
+function highlightSharedPost(postId) {
+  const card = els.feed?.querySelector(`[data-post-card][data-post-id="${CSS.escape(postId)}"]`);
+  if (!card) return false;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  card.classList.add('is-shared-highlight');
+  card.setAttribute('tabindex', '-1');
+  card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+  card.focus({ preventScroll: true });
+  window.setTimeout(() => {
+    card.classList.remove('is-shared-highlight');
+  }, 3600);
+  return true;
+}
+
+async function revealSharedPost() {
+  if (sharedHighlightDone) return;
+  const postId = sharedPostIdFromUrl();
+  if (!postId) {
+    sharedHighlightDone = true;
+    return;
+  }
+
+  let post = state.posts.find((item) => item.id === postId) || state.postsBase.find((item) => item.id === postId);
+  if (!post && state.supabase) {
+    const { data, error } = await state.supabase.from('posts_feed').select('*').eq('id', postId).maybeSingle();
+    if (error || !data) {
+      announce('Não foi possível abrir a proposta compartilhada.');
+      sharedHighlightDone = true;
+      return;
+    }
+    post = data;
+  }
+
+  if (!post) {
+    sharedHighlightDone = true;
+    return;
+  }
+
+  if (!state.posts.some((item) => item.id === postId)) {
+    state.posts = [post, ...state.posts.filter((item) => item.id !== postId)];
+    renderFeed();
+  }
+
+  sharedHighlightDone = true;
+  requestAnimationFrame(() => {
+    highlightSharedPost(postId);
+  });
+}
+
 function renderFeed() {
   els.feed.innerHTML = '';
   const searching = Boolean(state.searchTerm);
@@ -844,6 +1048,24 @@ function renderCard(post) {
   commentInput.id = `comment-${post.id}`;
   commentLabel.setAttribute('for', commentInput.id);
   if (state.user) commentForm.classList.remove('hidden');
+
+  node.id = `post-${post.id}`;
+  const shareBtn = node.querySelector('[data-share]');
+  const shareMenu = node.querySelector('[data-share-menu]');
+  if (shareBtn && shareMenu) {
+    const menuId = `share-menu-${post.id}`;
+    shareMenu.id = menuId;
+    shareBtn.setAttribute('aria-controls', menuId);
+    shareBtn.addEventListener('click', (event) => onShareButtonClick(event, post, node));
+    shareMenu.querySelectorAll('[data-share-to]').forEach((option) => {
+      option.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        sharePost(post.id, shareTitleFromPost(post), option.getAttribute('data-share-to'));
+        closeShareMenu(node);
+      });
+    });
+  }
 
   likeBtn.addEventListener('click', () => toggleLike(post, node));
   node.querySelector('[data-toggle-comments]').addEventListener('click', (event) => toggleComments(post.id, node, event.currentTarget));
@@ -1175,9 +1397,13 @@ function bindStaticEvents() {
   els.fabNewPost?.addEventListener('click', focusComposeToCreate);
   setupComposeObserver();
   document.addEventListener('click', (event) => {
+    if (!event.target.closest('[data-share-wrap]')) closeAllShareMenus();
     if (!els.headerSearch?.classList.contains('is-open')) return;
     if (els.headerSearch.contains(event.target)) return;
     setHeaderSearchOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeAllShareMenus();
   });
   els.cauForm?.addEventListener('submit', submitCau);
   document.getElementById('cau-cancel')?.addEventListener('click', () => els.cauDialog.close());

@@ -425,6 +425,153 @@ body.app-body::before {
   text-underline-offset: 3px;
 }
 
+.share-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font: inherit;
+}
+
+.btn-share:hover,
+.btn-share[aria-expanded="true"] {
+  color: #1b6f9a;
+  background: rgba(36, 198, 220, 0.16);
+}
+
+.share-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.share-popover {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.4rem);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 13.25rem;
+  max-width: min(16rem, calc(100vw - 2rem));
+  padding: 0.4rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.48);
+  backdrop-filter: blur(25px) saturate(220%);
+  -webkit-backdrop-filter: blur(25px) saturate(220%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+    0 12px 32px rgba(31, 38, 135, 0.14);
+}
+
+.share-popover[hidden],
+.share-popover.hidden {
+  display: none;
+}
+
+[data-post-card]:has([data-share][aria-expanded="true"]) {
+  position: relative;
+  z-index: 24;
+}
+
+.share-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  background: transparent;
+  border-radius: 0.75rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.share-option:hover,
+.share-option:focus-visible {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.share-option-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.share-option-whatsapp {
+  color: #128c7e;
+}
+
+.share-option-x {
+  color: #111;
+}
+
+.share-option-linkedin {
+  color: #0a66c2;
+}
+
+.share-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 80;
+  padding: 0.7rem 1.15rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 30px rgba(31, 38, 135, 0.16);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transform: translate(-50%, 1rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.share-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes shared-glow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
+      0 0 0 0 rgba(63, 94, 251, 0);
+  }
+  40% {
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
+      0 0 0 4px rgba(63, 94, 251, 0.38),
+      0 0 40px 10px rgba(36, 198, 220, 0.42);
+  }
+}
+
+.liquid-card.is-shared-highlight {
+  outline: 2px solid rgba(63, 94, 251, 0.55);
+  outline-offset: 4px;
+  animation: shared-glow 1.15s ease-in-out 3;
+}
+
 .btn-danger {
   color: #fff;
   background: var(--grad-warm);

@@ -92,6 +92,7 @@
 
       <div id="config-banner" class="wrap liquid-card banner hidden" role="status"></div>
       <div id="live-region" class="sr-only" aria-live="polite"></div>
+      <div id="share-toast" class="share-toast" role="status" aria-live="polite"></div>
 
       <section id="compose-bar" class="compose-bar hidden">
         <div class="wrap">
@@ -417,6 +418,62 @@
           <button type="button" data-toggle-comments class="btn-support" aria-expanded="false">
             Comentários (<span data-comment-count>0</span>)
           </button>
+          <div class="share-wrap" data-share-wrap>
+            <button
+              type="button"
+              data-share
+              class="btn-share"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-label="Compartilhar proposta"
+            >
+              <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11A2.99 2.99 0 0 0 21 5a3 3 0 1 0-2.96 3.22L10.99 12.3c.05.23.09.46.09.7s-.04.47-.09.7l7.13 4.16c.5-.48 1.17-.78 1.96-.78A3 3 0 1 0 18 16.08Z"
+                />
+              </svg>
+              <span>Compartilhar</span>
+            </button>
+            <div data-share-menu class="share-popover hidden" role="menu">
+              <button type="button" role="menuitem" class="share-option" data-share-to="whatsapp">
+                <svg class="share-option-icon share-option-whatsapp" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.91-7.01Zm-7.01 15.24h-.01c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.42 5.83c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.4-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.23-.16-.48-.28Z"
+                  />
+                </svg>
+                WhatsApp
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="twitter">
+                <svg class="share-option-icon share-option-x" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M18.244 2H21.5l-7.5 8.57L22.5 22h-6.59l-5.16-6.74L5.2 22H1.93l8.02-8.73L1.5 2h6.76l4.66 6.18L18.244 2Zm-1.16 18.15h1.82L7 3.76H5.05l12.03 16.39Z"
+                  />
+                </svg>
+                X / Twitter
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="linkedin">
+                <svg class="share-option-icon share-option-linkedin" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.73V1.73C24 .77 23.2 0 22.23 0Z"
+                  />
+                </svg>
+                LinkedIn
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="copy">
+                <svg class="share-option-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M10.59 13.41a1.75 1.75 0 0 1 0-2.47l3.18-3.18a1.75 1.75 0 1 1 2.47 2.47l-1.1 1.1a.75.75 0 1 0 1.06 1.06l1.1-1.1a3.25 3.25 0 0 0-4.6-4.6l-3.18 3.18a3.25 3.25 0 0 0 4.6 4.6.75.75 0 0 0 0-1.06 1.75 1.75 0 0 1-2.47 0Zm2.82-2.82a1.75 1.75 0 0 1 0 2.47l-3.18 3.18a1.75 1.75 0 1 1-2.47-2.47l1.1-1.1a.75.75 0 0 0-1.06-1.06l-1.1 1.1a3.25 3.25 0 1 0 4.6 4.6l3.18-3.18a3.25 3.25 0 0 0-4.6-4.6.75.75 0 1 0 1.06 1.06c.68.68 1.79.68 2.47 0Z"
+                  />
+                </svg>
+                Copiar Link
+              </button>
+            </div>
+          </div>
           <button type="button" data-report class="btn-text">Denunciar</button>
           <button type="button" data-delete-own class="btn-text hidden">Excluir minha publicação</button>
         </div>
