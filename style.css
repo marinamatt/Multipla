@@ -111,6 +111,11 @@ body.app-body::before {
   padding: 0.65rem 0;
 }
 
+.header-inner > .btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .brand {
   display: flex;
   align-items: center;
