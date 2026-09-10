@@ -516,7 +516,19 @@ async function loadProfile() {
       cau_number: previousCau || null,
     };
   }
+  await refreshAdminFlag();
   await refreshCauValidity();
+}
+
+async function refreshAdminFlag() {
+  if (!state.user || !state.supabase) return;
+  try {
+    const { data, error } = await state.supabase.rpc('is_admin');
+    if (error) return;
+    state.profile = { ...(state.profile || {}), is_admin: Boolean(data) };
+  } catch {
+    /* função ausente no banco — usa o valor do perfil */
+  }
 }
 
 async function refreshCauValidity() {
