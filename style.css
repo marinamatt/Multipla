@@ -947,6 +947,123 @@ body > .share-popover {
   color: var(--text-muted);
 }
 
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.user-menu-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.user-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.user-menu-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.user-menu-btn:hover,
+.user-menu-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.user-menu-gear {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  z-index: 70;
+  width: min(18.5rem, calc(100vw - 1.5rem));
+  padding: 0.4rem;
+  border-radius: 1.05rem;
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
+    0 18px 40px rgba(31, 38, 135, 0.16);
+}
+
+.user-dropdown.hidden {
+  display: none;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  border-radius: 0.8rem;
+  padding: 0.72rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.user-dropdown-item:hover,
+.user-dropdown-item:focus-visible {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.user-dropdown-emoji {
+  width: 1.25rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.user-dropdown-sep {
+  height: 1px;
+  margin: 0.25rem 0.45rem;
+  background: rgba(29, 29, 31, 0.08);
+}
+
+.user-dropdown-danger {
+  color: #9f1239;
+}
+
+.user-dropdown-danger:hover,
+.user-dropdown-danger:focus-visible {
+  background: rgba(255, 75, 139, 0.14);
+}
+
+#confirm-message.is-danger {
+  color: #9f1239;
+  font-weight: 600;
+  background: rgba(255, 75, 139, 0.12);
+  border: 1px solid rgba(255, 75, 139, 0.28);
+  border-radius: 0.85rem;
+  padding: 0.85rem 0.95rem;
+}
+
 dialog.settings-sheet {
   max-width: min(36rem, calc(100% - 2rem));
   max-height: min(44rem, calc(100vh - 2.5rem));
@@ -1385,6 +1502,10 @@ dialog::backdrop {
 
   .header-inner {
     position: relative;
+  }
+
+  .user-menu-identity {
+    display: none;
   }
 }
 

@@ -359,13 +359,19 @@ function showFeedback(node, message, isError = false) {
   node.className = `text-sm ${isError ? 'feedback-error' : 'feedback-ok'}`;
 }
 
-async function confirmAction(title, message) {
+async function confirmAction(title, message, { danger = false } = {}) {
   document.getElementById('confirm-title').textContent = title;
-  document.getElementById('confirm-message').textContent = message;
+  const msg = document.getElementById('confirm-message');
+  msg.textContent = message;
+  msg.classList.toggle('is-danger', danger);
+  const okBtn = document.getElementById('confirm-ok');
+  if (okBtn) okBtn.textContent = danger ? 'Excluir' : 'Confirmar';
   els.confirmDialog.showModal();
   return new Promise((resolve) => {
     const onClose = () => {
       els.confirmDialog.removeEventListener('close', onClose);
+      msg.classList.remove('is-danger');
+      if (okBtn) okBtn.textContent = 'Confirmar';
       resolve(els.confirmDialog.returnValue === 'ok');
     };
     els.confirmDialog.addEventListener('close', onClose, { once: true });
@@ -406,22 +412,63 @@ function renderAuth() {
   const adminTag = isAdmin() ? `<span class="admin-tag">Administrador</span>` : '';
 
   els.authSlot.innerHTML = `
-    <div class="flex items-center gap-3">
+    <div class="user-menu">
       ${
         avatar
           ? `<img src="${avatar}" alt="" width="36" height="36" class="avatar" />`
           : ''
       }
-      <div class="text-right">
+      <div class="user-menu-identity">
         <p class="user-name">${escapeHtml(name)}</p>
         ${adminTag}
       </div>
-      <button type="button" id="btn-account" class="btn btn-ghost">Minha conta</button>
-      <button type="button" id="btn-logout" class="btn btn-ghost">Sair</button>
+      <div class="user-menu-wrap" id="user-menu-wrap">
+        <button
+          type="button"
+          id="user-menu-btn"
+          class="user-menu-btn"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="user-menu"
+          aria-label="Configurações da conta"
+        >
+          <svg class="user-menu-gear" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.77 8.88a.5.5 0 0 0 .12.64L4.92 11.1c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.43.34.68.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.42.5.42h3.84a.5.5 0 0 0 .5-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.25.12.54.02.68-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 15.6 12 3.6 3.6 0 0 1 12 15.6Z"
+            />
+          </svg>
+        </button>
+        <div id="user-menu" class="user-dropdown hidden" role="menu">
+          <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="notifications">
+            <span class="user-dropdown-emoji" aria-hidden="true">🔔</span>
+            Controle de Notificações
+          </button>
+          <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="privacy">
+            <span class="user-dropdown-emoji" aria-hidden="true">📄</span>
+            Termos e Privacidade
+          </button>
+          <div class="user-dropdown-sep" aria-hidden="true"></div>
+          <button type="button" class="user-dropdown-item user-dropdown-danger" role="menuitem" data-user-action="delete">
+            <span class="user-dropdown-emoji" aria-hidden="true">🗑️</span>
+            Excluir Minhas Contribuições
+          </button>
+          <button type="button" class="user-dropdown-item" role="menuitem" data-user-action="logout">
+            <span class="user-dropdown-emoji" aria-hidden="true">🚪</span>
+            Sair
+          </button>
+        </div>
+      </div>
     </div>
   `;
-  document.getElementById('btn-logout')?.addEventListener('click', signOut);
-  document.getElementById('btn-account')?.addEventListener('click', openAccountSettings);
+  document.getElementById('user-menu-btn')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleUserMenu();
+  });
+  document.getElementById('user-menu')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-user-action]');
+    if (btn) onUserMenuAction(btn.getAttribute('data-user-action'));
+  });
   els.composeBar.classList.remove('hidden');
   syncComposeLock();
   refreshComposeFab();
@@ -498,7 +545,9 @@ async function signInWithGoogle() {
 }
 
 async function signOut() {
+  closeUserMenu();
   await state.supabase.auth.signOut();
+  window.location.reload();
 }
 
 async function recordConsent() {
@@ -1525,6 +1574,46 @@ function closeNotifyMenu() {
   els.notifyBell?.setAttribute('aria-expanded', 'false');
 }
 
+function closeUserMenu() {
+  const menu = document.getElementById('user-menu');
+  const btn = document.getElementById('user-menu-btn');
+  menu?.classList.add('hidden');
+  btn?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleUserMenu() {
+  const menu = document.getElementById('user-menu');
+  const btn = document.getElementById('user-menu-btn');
+  if (!menu) return;
+  const willOpen = menu.classList.contains('hidden');
+  closeNotifyMenu();
+  if (!willOpen) {
+    closeUserMenu();
+    return;
+  }
+  menu.classList.remove('hidden');
+  btn?.setAttribute('aria-expanded', 'true');
+}
+
+function onUserMenuAction(action) {
+  closeUserMenu();
+  if (action === 'notifications') {
+    void openAccountSettings();
+    return;
+  }
+  if (action === 'privacy') {
+    openLgpdPolicyDialog();
+    return;
+  }
+  if (action === 'delete') {
+    void deleteMyContributions();
+    return;
+  }
+  if (action === 'logout') {
+    void signOut();
+  }
+}
+
 function toggleNotifyMenu() {
   if (!state.user) {
     openLogin();
@@ -1535,6 +1624,7 @@ function toggleNotifyMenu() {
     closeNotifyMenu();
     return;
   }
+  closeUserMenu();
   renderNotifyMenu();
   els.notifyMenu?.classList.remove('hidden');
   els.notifyBell?.setAttribute('aria-expanded', 'true');
@@ -1735,8 +1825,9 @@ async function hideComment(commentId, currentlyHidden, postId, card) {
 
 async function deleteMyContributions() {
   const ok = await confirmAction(
-    'Excluir minhas contribuições',
-    'Todas as suas publicações, comentários, apoios e denúncias serão eliminados. O perfil de login permanece até você apagar a conta no provedor.',
+    'Atenção',
+    'Atenção: Esta ação irá remover permanentemente todas as suas propostas, comentários e votos cadastrados na plataforma Múltiplas. Deseja continuar?',
+    { danger: true },
   );
   if (!ok) return;
   const { error } = await state.supabase.rpc('delete_my_contributions');
@@ -1744,8 +1835,9 @@ async function deleteMyContributions() {
     announce(error.message);
     return;
   }
-  announce('Suas contribuições foram excluídas.');
+  showShareToast('Suas contribuições foram apagadas com sucesso.');
   await loadPosts();
+  await loadTrendingTopics();
 }
 
 function openReport({ postId = null, commentId = null }) {
@@ -1840,6 +1932,7 @@ function bindStaticEvents() {
       closeAllShareMenus();
     }
     if (!event.target.closest('#notify-wrap')) closeNotifyMenu();
+    if (!event.target.closest('#user-menu-wrap')) closeUserMenu();
     if (!els.headerSearch?.classList.contains('is-open')) return;
     if (els.headerSearch.contains(event.target)) return;
     setHeaderSearchOpen(false);
@@ -1848,6 +1941,7 @@ function bindStaticEvents() {
     if (event.key === 'Escape') {
       closeAllShareMenus();
       closeNotifyMenu();
+      closeUserMenu();
     }
   });
   window.addEventListener('resize', () => closeAllShareMenus());
