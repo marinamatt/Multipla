@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Chapa Múltipla CAU/SC — debate público: Ideias, reclamações e comunidade."
+    />
+    <title>Chapa Múltipla CAU/SC</title>
+    <link rel="canonical" href="https://fantastic-dodol-08e97f.netlify.app/" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="apple-touch-icon" href="./assets/asterisco-180.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "text-primary": "#1D1D1F",
+            },
+            fontFamily: {
+              sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="app-body">
+    <div class="page-shell">
+      <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+      <header class="site-header">
+        <div class="wrap header-inner">
+          <a href="./index.html" class="brand">
+            <img
+              src="./assets/logo-chapa-multipla.png"
+              alt="Chapa Múltipla CAU/SC"
+              class="brand-logo"
+              width="280"
+              height="98"
+            />
+          </a>
+          <div class="header-search" id="header-search">
+            <button
+              type="button"
+              id="search-toggle"
+              class="search-toggle"
+              aria-controls="feed-search"
+              aria-expanded="false"
+              aria-label="Buscar debates"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M20 20l-3.2-3.2"></path>
+              </svg>
+            </button>
+            <form id="search-form" class="search-shell liquid-card" role="search">
+              <label class="sr-only" for="feed-search">Buscar debates</label>
+              <span class="search-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="M20 20l-3.2-3.2"></path>
+                </svg>
+              </span>
+              <input
+                type="search"
+                id="feed-search"
+                name="q"
+                class="search-input"
+                placeholder="Buscar debates, temas ou hashtags"
+                maxlength="80"
+                autocomplete="off"
+                enterkeyhint="search"
+              />
+              <button type="button" id="search-clear" class="search-clear hidden" aria-label="Limpar busca">×</button>
+            </form>
+          </div>
+          <div id="notify-host" class="notify-host">
+            <div class="header-notify hidden" id="notify-wrap">
+            <button
+              type="button"
+              id="notify-bell"
+              class="notify-bell"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Notificações"
+            >
+              <svg class="notify-bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm8-6.2v-5.1c0-3.3-1.8-6.1-5-6.8V3.4A2.4 2.4 0 0 0 12.6 1h-1.2A2.4 2.4 0 0 0 9 3.4v.5c-3.2.7-5 3.5-5 6.8v5.1L2.4 17.4v1.1h19.2v-1.1L20 15.8Z"
+                />
+              </svg>
+              <span id="notify-badge" class="notify-badge hidden">0</span>
+            </button>
+            <div id="notify-menu" class="notify-menu hidden" role="menu"></div>
+            </div>
+          </div>
+          <div class="auth-slot" id="auth-slot">
+            <div class="h-8 w-36 animate-pulse rounded-full bg-white/40" aria-hidden="true"></div>
+          </div>
+        </div>
+      </header>
+
+      <div id="config-banner" class="wrap liquid-card banner hidden" role="status"></div>
+      <div id="live-region" class="sr-only" aria-live="polite"></div>
+      <div id="share-toast" class="share-toast" role="status" aria-live="polite"></div>
+
+      <section id="guest-prompt" class="compose-bar" aria-label="Entrar no debate">
+        <div class="wrap">
+          <div class="liquid-card guest-prompt">
+            <p>Faça login para participar do debate.</p>
+            <button type="button" id="btn-login-prompt" class="btn btn-primary">Entrar com Google</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="compose-bar" class="compose-bar hidden">
+        <div class="wrap">
+          <div id="idea-box" class="compose-shell">
+            <form id="post-form" class="liquid-card compose-card compose-grid" novalidate>
+            <label class="sr-only" for="post-type">Categoria</label>
+            <select id="post-type" name="type" class="glass-select" required>
+              <option value="ideia">Ideia</option>
+              <option value="reclamacao">Reclamação</option>
+            </select>
+
+            <label class="sr-only" for="post-content">Texto da publicação</label>
+            <textarea
+              id="post-content"
+              name="content"
+              minlength="3"
+              maxlength="1000"
+              rows="2"
+              required
+              placeholder="Escreva uma ideia ou reclamação. Use hashtags, ex: #ATHIS #Fiscalização"
+              class="glass-textarea"
+            ></textarea>
+
+            <button type="submit" class="btn btn-primary">Publicar</button>
+
+            <input
+              type="text"
+              name="b_phone_check"
+              class="hidden visually-hidden-hp"
+              tabindex="-1"
+              autocomplete="off"
+              aria-hidden="true"
+              style="display: none !important"
+            />
+
+            <div class="checks" style="grid-column: 1 / -1">
+              <label class="inline-flex items-start gap-2">
+                <input id="post-anonymous" type="checkbox" class="mt-1" />
+                <span>Publicar como anônimo <span class="meta">(exibe “Arquiteto(a) Anônimo(a)”)</span></span>
+              </label>
+            </div>
+            <p id="post-feedback" class="meta" style="grid-column: 1 / -1" role="status"></p>
+          </form>
+            <div id="compose-lock" class="compose-lock hidden">
+              <p>Para publicar, informe o registro no CAU e aceite o Termo de Consentimento e Política de Privacidade (LGPD).</p>
+              <button type="button" id="btn-open-cau" class="btn btn-primary">Informar registro CAU</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main id="conteudo" class="wrap" style="padding: 2rem 0 1rem">
+        <p id="search-status" class="search-status" role="status"></p>
+        <div class="feed-toolbar">
+          <div>
+            <h1 class="title-xl">Mesa de debate</h1>
+            <p class="lede">
+              A construção do CAU/SC começa com a sua voz. Queremos um conselho próximo, transparente, público e democrático. O Múltipla é a sua plataforma aberta para enviar sugestões, expor os desafios da categoria e debater propostas para o futuro da nossa profissão e das nossas cidades.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Filtros do feed">
+            <label>
+              <span class="sr-only">Filtrar por tipo</span>
+              <select id="filter-type" class="glass-select">
+                <option value="todos">Todas</option>
+                <option value="ideia">Ideias</option>
+                <option value="reclamacao">Reclamações</option>
+              </select>
+            </label>
+            <label>
+              <span class="sr-only">Ordenar</span>
+              <select id="filter-sort" class="glass-select">
+                <option value="recentes">Mais recentes</option>
+                <option value="apoios">Mais apoios</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <section id="admin-panel" class="liquid-card category-reclamacao p-6 mb-8 hidden" aria-labelledby="admin-title">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h2 id="admin-title" class="card-title" style="margin: 0">Modo de moderação</h2>
+            <span class="admin-tag">Administrador</span>
+          </div>
+          <p class="lede" style="margin-bottom: 1rem">
+            Denúncias, ocultação de comentários inadequados e exclusão de publicações. O autor real de postagens anônimas
+            não é exibido neste painel — apenas o conteúdo e a data.
+          </p>
+          <div id="reports-list" class="feed-grid"></div>
+        </section>
+
+        <section class="liquid-card trending-card p-5 mb-6" aria-labelledby="trending-title">
+          <p class="trending-kicker">Em alta na categoria</p>
+          <h2 id="trending-title" class="card-title">Tópicos mais comentados</h2>
+          <div id="trending-topics-list" class="topic-list">
+            <span class="meta">Carregando tópicos…</span>
+          </div>
+          <button type="button" id="clear-topic" class="btn-text hidden" style="margin-top: 0.75rem">Ver todos os tópicos</button>
+        </section>
+
+        <section aria-labelledby="feed-title">
+          <h2 id="feed-title" class="sr-only">Publicações</h2>
+          <div id="feed" class="feed-grid"></div>
+          <p id="feed-empty" class="liquid-card p-8 text-center meta">
+            Ainda não há publicações neste filtro. Seja a primeira pessoa a abrir o debate.
+          </p>
+          <div id="feed-search-empty" class="liquid-card feed-search-empty hidden">
+            <p class="feed-search-empty-title">Nenhum debate encontrado. Seja o primeiro a criar uma proposta sobre este tema!</p>
+            <button type="button" id="btn-search-create" class="btn btn-primary">Criar Post</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="wrap flex flex-col gap-2 sm:flex-row sm:justify-between">
+          <p>Campanha Chapa Múltipla Número 3 — Conselho de Arquitetura e Urbanismo. Dados tratados conforme a LGPD (Lei 13.709/2018).</p>
+          <p class="footer-links">
+            <a href="./sobre.html">Sobre</a>
+            <a href="./privacidade.html">Privacidade</a>
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <button type="button" id="fab-new-post" class="fab-new-post" aria-label="Nova publicação">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M5 6.75A2.75 2.75 0 0 1 7.75 4h8.5A2.75 2.75 0 0 1 19 6.75v6.5A2.75 2.75 0 0 1 16.25 16H11l-4.2 3.15A.75.75 0 0 1 5.6 18.4L7 16H7.75A2.75 2.75 0 0 1 5 13.25v-6.5Z"
+          fill="currentColor"
+          opacity="0.92"
+        />
+      </svg>
+    </button>
+
+    <div id="moderation-alert" class="moderation-alert hidden" role="alert" aria-live="assertive">
+      <div class="liquid-card moderation-alert-card">
+        <p id="moderation-alert-text">
+          Sua mensagem contém palavras inadequadas ou formato inválido. Por favor, revise seu texto antes de enviar.
+        </p>
+        <button type="button" id="moderation-alert-close" class="btn btn-ghost">Entendi</button>
+      </div>
+    </div>
+
+    <dialog id="cau-dialog" class="liquid-card dialog-sheet cau-modal" aria-labelledby="cau-title">
+      <form id="cau-form" class="space-y-4" novalidate>
+        <h2 id="cau-title" class="title-xl" style="font-size: 1.6rem">Registro no CAU</h2>
+        <p class="lede">
+          Para <strong>publicar</strong> ideias e reclamações, informe o seu número de registro no CAU/SC
+          exatamente como na relação de profissionais ativos ou no SICCAU.
+          Comentários no feed não exigem esse passo — use “Agora não” se quiser só comentar.
+          Exemplos: A765432-1 ou 00A7654321.
+        </p>
+        <label class="block text-sm" for="cau-number">
+          Número do CAU
+          <input
+            id="cau-number"
+            name="cau_number"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="14"
+            placeholder="A765432-1"
+            class="glass-input mt-1"
+            required
+          />
+        </label>
+        <label class="flex items-start gap-2 text-sm">
+          <input id="cau-declaration" type="checkbox" required class="mt-1" />
+          <span>Declaro ser arquiteto(a) e urbanista ativo(a) em Santa Catarina</span>
+        </label>
+        <div class="flex items-start gap-2 text-sm">
+          <input id="cau-lgpd" name="lgpd_consent" type="checkbox" required class="mt-1" />
+          <span>
+            <label for="cau-lgpd">Li e concordo com o</label>
+            <a href="./privacidade.html" id="lgpd-policy-link" class="policy-link">Termo de Consentimento e Política de Privacidade (LGPD)</a><label for="cau-lgpd">.
+            Autorizo o uso dos meus dados exclusivamente para participação nos debates e comunicações desta chapa eleitoral do CAU/SC.</label>
+          </span>
+        </div>
+        <p id="cau-feedback" class="meta" role="status"></p>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" id="cau-submit" class="btn btn-primary">Validar e salvar</button>
+          <button type="button" id="cau-cancel" class="btn btn-ghost">Agora não</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="lgpd-policy-dialog" class="liquid-card dialog-sheet policy-sheet" aria-labelledby="lgpd-policy-title">
+      <div class="policy-sheet-body">
+        <h2 id="lgpd-policy-title" class="title-xl" style="font-size: 1.4rem">Termo de Consentimento e Política de Privacidade (LGPD)</h2>
+        <p class="lede">Plataforma Múltipla — Chapa Eleitoral CAU/SC</p>
+        <p>
+          Ao se cadastrar e utilizar a plataforma Múltipla, você concorda com a coleta e o tratamento de seus dados
+          pessoais por esta Chapa Eleitoral, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 - LGPD).
+        </p>
+        <h3 class="card-title">1. Coleta e Finalidade dos Dados</h3>
+        <p>Coletamos informações pessoais para garantir a transparência, legitimidade e segurança do debate eleitoral:</p>
+        <ul>
+          <li>
+            <strong>Dados de Identificação e Contato:</strong> Nome completo, endereço de e-mail e foto de perfil
+            (via autenticação do Google), para identificação na plataforma e envio de atualizações do projeto da chapa.
+          </li>
+          <li>
+            <strong>Registro Profissional (Número do CAU):</strong> Coletado e validado via algoritmo de checagem para
+            confirmar sua habilitação como arquiteto(a) e urbanista em Santa Catarina, garantindo que o espaço de debate
+            seja exclusivo da categoria.
+          </li>
+          <li>
+            <strong>Dados de Interação:</strong> Conteúdos postados, comentários e denúncias efetuadas na plataforma,
+            utilizados para consolidação de propostas de gestão e moderação do espaço.
+          </li>
+        </ul>
+        <h3 class="card-title">2. Uso das Informações</h3>
+        <p>Seus dados serão utilizados exclusivamente para:</p>
+        <ul>
+          <li>Validar seu acesso às funcionalidades de publicação na plataforma.</li>
+          <li>Enviar comunicações relativas a propostas, eventos e notícias da campanha eleitoral da Chapa.</li>
+          <li>Elaborar diagnósticos estatísticos e anônimos sobre as demandas da categoria em Santa Catarina.</li>
+        </ul>
+        <h3 class="card-title">3. Compartilhamento e Segurança</h3>
+        <ul>
+          <li>
+            <strong>Não Comercialização:</strong> A Chapa compromete-se a não vender, alugar ou transferir seus dados
+            a terceiros para fins comerciais.
+          </li>
+          <li>
+            <strong>Infraestrutura:</strong> Os dados são armazenados em ambiente seguro de nuvem (Supabase), com
+            políticas de controle de acesso (RLS) que restringem o manuseio das informações aos administradores
+            autorizados da campanha.
+          </li>
+        </ul>
+        <h3 class="card-title">4. Seus Direitos (Revogação e Exclusão)</h3>
+        <p>Você possui o direito de, a qualquer momento:</p>
+        <ul>
+          <li>Solicitar a confirmação, acesso ou correção dos seus dados.</li>
+          <li>
+            Revogar o consentimento e solicitar a exclusão permanente dos seus dados da base da campanha, o que
+            resultará no encerramento da sua conta na plataforma.
+          </li>
+        </ul>
+        <p>
+          Para exercer seus direitos, entre em contato através do email oficial da campanha
+          <a href="mailto:multiplacausc@gmail.com">multiplacausc@gmail.com</a>.
+        </p>
+        <h3 class="card-title">5. Término do Tratamento</h3>
+        <p>
+          Ao término do período eleitoral do CAU/SC e encerramento das atividades da campanha, a base de dados será
+          arquivada ou anonimizada, mantendo-se apenas o estritamente necessário para cumprimento de obrigações legais
+          ou prestação de contas eleitorais.
+        </p>
+        <button type="button" id="lgpd-policy-close" class="btn btn-primary">Fechar</button>
+      </div>
+    </dialog>
+
+    <dialog id="login-dialog" class="liquid-card dialog-sheet" aria-labelledby="login-title">
+      <form id="login-form" class="space-y-4">
+        <h2 id="login-title" class="title-xl" style="font-size: 1.6rem">Entrar para participar</h2>
+        <p class="lede">Autenticação via Google. O e-mail não é publicado no feed.</p>
+        <label class="flex items-start gap-2 text-sm">
+          <input id="login-lgpd" type="checkbox" required class="mt-1" />
+          <span>
+            Concordo com o
+            <a href="./privacidade.html" target="_blank" rel="noopener noreferrer">Termo de Consentimento e Política de Privacidade (LGPD)</a>
+            e com o tratamento dos meus dados para fins de participação no debate.
+          </span>
+        </label>
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary">Entrar com Google</button>
+          <button type="button" id="login-cancel" class="btn btn-ghost" value="cancel">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="liquid-card dialog-sheet" aria-labelledby="confirm-title">
+      <form method="dialog" class="space-y-4">
+        <h2 class="card-title" id="confirm-title">Confirmar</h2>
+        <p id="confirm-message" class="lede"></p>
+        <div class="flex gap-2">
+          <button id="confirm-ok" value="ok" class="btn btn-warm">Confirmar</button>
+          <button value="cancel" class="btn btn-ghost">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="follow-dialog" class="liquid-card dialog-sheet" aria-labelledby="follow-title">
+      <div class="space-y-4">
+        <h2 id="follow-title" class="card-title">Seguir debate</h2>
+        <p id="follow-message" class="lede">
+          Deseja receber notificações por e-mail quando houver novas respostas neste debate?
+        </p>
+        <p class="meta">
+          E-mails só são enviados se você aceitar aqui. O aviso no site continua disponível no sino.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="follow-email" class="btn btn-primary">Sim, enviar e-mails</button>
+          <button type="button" id="follow-site" class="btn btn-ghost">Apenas no site</button>
+          <button type="button" id="follow-cancel" class="btn-text">Cancelar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="account-dialog" class="liquid-card dialog-sheet settings-sheet" aria-labelledby="account-title">
+      <div class="settings-sheet-body">
+        <h2 id="account-title" class="title-xl" style="font-size: 1.45rem">Controle de Notificações</h2>
+        <section class="settings-section" aria-labelledby="settings-notify-title">
+          <h3 id="settings-notify-title" class="card-title">E-mail (opt-in/opt-out) e avisos in-app</h3>
+          <label class="pref-switch">
+            <input type="checkbox" id="pref-allow-email" />
+            <span class="pref-switch-ui" aria-hidden="true"></span>
+            <span>
+              <strong>Notificações por e-mail</strong>
+              <span class="meta">Mesmo ligado, cada debate só envia e-mail se você aceitar em Seguir Debate. Desligue para recusar qualquer e-mail da plataforma (opt-out mestre).</span>
+            </span>
+          </label>
+          <label class="pref-switch">
+            <input type="checkbox" id="pref-in-app" />
+            <span class="pref-switch-ui" aria-hidden="true"></span>
+            <span>
+              <strong>Notificações no site</strong>
+              <span class="meta">Avisos visuais de respostas nos seus posts e debates seguidos.</span>
+            </span>
+          </label>
+        </section>
+        <section class="settings-section" aria-labelledby="settings-follows-title">
+          <h3 id="settings-follows-title" class="card-title">Debates seguidos</h3>
+          <div id="followed-list" class="followed-list"></div>
+        </section>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="account-close" class="btn btn-primary">Fechar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="report-dialog" class="liquid-card dialog-sheet" aria-labelledby="report-title">
+      <form id="report-form" class="space-y-4">
+        <h2 id="report-title" class="card-title">Denunciar conteúdo</h2>
+        <label class="block text-sm">
+          Motivo
+          <textarea id="report-reason" required minlength="3" maxlength="500" rows="3" class="glass-textarea mt-1"></textarea>
+        </label>
+        <input type="hidden" id="report-post-id" />
+        <input type="hidden" id="report-comment-id" />
+        <div class="flex gap-2">
+          <button type="submit" class="btn btn-primary">Enviar denúncia</button>
+          <button type="button" id="report-cancel" class="btn btn-ghost">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="post-card-template">
+      <article class="liquid-card p-6" data-post-card>
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <span data-badge class="badge"></span>
+          <div class="card-top-meta">
+            <button type="button" data-follow class="btn-follow" aria-pressed="false">
+              <svg class="follow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm8-6.2v-5.1c0-3.3-1.8-6.1-5-6.8V3.4A2.4 2.4 0 0 0 12.6 1h-1.2A2.4 2.4 0 0 0 9 3.4v.5c-3.2.7-5 3.5-5 6.8v5.1L2.4 17.4v1.1h19.2v-1.1L20 15.8Z"
+                />
+              </svg>
+              <span data-follow-label>Seguir Debate</span>
+            </button>
+            <span class="meta">
+              <span data-author></span>
+              · <time data-date></time>
+            </span>
+          </div>
+        </div>
+        <div class="mb-3 flex justify-end" data-admin-actions></div>
+        <p data-content class="card-body"></p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-like class="btn-support">
+            Apoiar (<span data-like-count>0</span>)
+          </button>
+          <button type="button" data-toggle-comments class="btn-support" aria-expanded="false">
+            Comentários (<span data-comment-count>0</span>)
+          </button>
+          <div class="share-wrap" data-share-wrap>
+            <button
+              type="button"
+              data-share
+              class="btn-share"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-label="Compartilhar proposta"
+            >
+              <svg class="share-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+              </svg>
+            </button>
+            <div data-share-menu class="share-popover hidden" role="menu">
+              <button type="button" role="menuitem" class="share-option" data-share-to="whatsapp">
+                <svg class="share-option-icon share-option-whatsapp" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.91-7.01Zm-7.01 15.24h-.01c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.18 8.18 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24 2.2 0 4.27.86 5.82 2.42a8.18 8.18 0 0 1 2.42 5.83c0 4.54-3.7 8.23-8.23 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.4-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.43.06-.66.31-.23.25-.87.85-.87 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.23-.16-.48-.28Z"
+                  />
+                </svg>
+                WhatsApp
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="instagram">
+                <svg class="share-option-icon share-option-instagram" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M7.8 2h8.4A5.8 5.8 0 0 1 22 7.8v8.4A5.8 5.8 0 0 1 16.2 22H7.8A5.8 5.8 0 0 1 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2Zm0 2A3.8 3.8 0 0 0 4 7.8v8.4A3.8 3.8 0 0 0 7.8 20h8.4A3.8 3.8 0 0 0 20 16.2V7.8A3.8 3.8 0 0 0 16.2 4H7.8Zm9.65 1.5a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"
+                  />
+                </svg>
+                Instagram
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="linkedin">
+                <svg class="share-option-icon share-option-linkedin" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.73V1.73C24 .77 23.2 0 22.23 0Z"
+                  />
+                </svg>
+                LinkedIn
+              </button>
+              <button type="button" role="menuitem" class="share-option" data-share-to="copy">
+                <svg class="share-option-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M10.59 13.41a1.75 1.75 0 0 1 0-2.47l3.18-3.18a1.75 1.75 0 1 1 2.47 2.47l-1.1 1.1a.75.75 0 1 0 1.06 1.06l1.1-1.1a3.25 3.25 0 0 0-4.6-4.6l-3.18 3.18a3.25 3.25 0 0 0 4.6 4.6.75.75 0 0 0 0-1.06 1.75 1.75 0 0 1-2.47 0Zm2.82-2.82a1.75 1.75 0 0 1 0 2.47l-3.18 3.18a1.75 1.75 0 1 1-2.47-2.47l1.1-1.1a.75.75 0 0 0-1.06-1.06l-1.1 1.1a3.25 3.25 0 1 0 4.6 4.6l3.18-3.18a3.25 3.25 0 0 0-4.6-4.6.75.75 0 1 0 1.06 1.06c.68.68 1.79.68 2.47 0Z"
+                  />
+                </svg>
+                Copiar Link
+              </button>
+            </div>
+          </div>
+          <button type="button" data-report class="btn-text">Denunciar</button>
+          <button type="button" data-delete-own class="btn-text hidden">Excluir minha publicação</button>
+        </div>
+        <section data-comments-panel class="mt-5 hidden border-t border-white/40 pt-4" aria-label="Comentários">
+          <div data-comments-list class="feed-grid"></div>
+          <form data-comment-form class="mt-4 hidden space-y-3">
+            <label class="sr-only" data-comment-label>Comentar</label>
+            <textarea data-comment-input minlength="3" maxlength="800" rows="2" required placeholder="Escreva um comentário…" class="glass-textarea"></textarea>
+            <input type="text" name="b_phone_check" class="hidden visually-hidden-hp" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none !important" />
+            <div class="checks">
+              <label class="inline-flex items-center gap-2">
+                <input type="checkbox" data-comment-anon />
+                Comentar como anônimo
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Comentar</button>
+            <p data-comment-feedback class="meta"></p>
+          </form>
+        </section>
+      </article>
+    </template>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
