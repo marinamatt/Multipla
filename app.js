@@ -35,6 +35,7 @@ const state = {
 const els = {
   authSlot: document.getElementById('auth-slot'),
   composeBar: document.getElementById('compose-bar'),
+  guestPrompt: document.getElementById('guest-prompt'),
   postForm: document.getElementById('post-form'),
   postFeedback: document.getElementById('post-feedback'),
   feed: document.getElementById('feed'),
@@ -383,10 +384,15 @@ function placeNotifyBesideSettings() {
   gearWrap.parentElement.insertBefore(els.notifyWrap, gearWrap);
 }
 
+function syncGuestPrompt() {
+  els.guestPrompt?.classList.toggle('hidden', Boolean(state.user));
+}
+
 function renderAuth() {
   parkNotifyWrap();
   if (!CONFIG_READY) {
     els.authSlot.innerHTML = `<span class="meta">Configure o Supabase para entrar</span>`;
+    syncGuestPrompt();
     return;
   }
 
@@ -398,6 +404,7 @@ function renderAuth() {
     `;
     document.getElementById('btn-login')?.addEventListener('click', openLogin);
     els.composeBar.classList.add('hidden');
+    syncGuestPrompt();
     syncComposeLock();
     refreshComposeFab();
     syncNotifyBell();
@@ -469,6 +476,7 @@ function renderAuth() {
   });
   placeNotifyBesideSettings();
   els.composeBar.classList.remove('hidden');
+  syncGuestPrompt();
   syncComposeLock();
   refreshComposeFab();
   syncNotifyBell();
@@ -2007,6 +2015,7 @@ function bindStaticEvents() {
   document.getElementById('cau-number')?.addEventListener('blur', (event) => {
     event.target.value = formatCauInput(event.target.value);
   });
+  document.getElementById('btn-login-prompt')?.addEventListener('click', openLogin);
   els.loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!document.getElementById('login-lgpd').checked) return;
@@ -2036,6 +2045,7 @@ async function init() {
       'Preencha <code>js/config.js</code> com a URL e a chave anon do Supabase e rode <code>script.sql</code> no SQL Editor. Sem a chave <code>service_role</code>.',
     );
     renderAuth();
+    document.getElementById('btn-login-prompt')?.addEventListener('click', openLogin);
     els.feedEmpty.classList.remove('hidden');
     els.feedEmpty.textContent = 'O feed aparece quando o projeto Supabase estiver ligado a este site.';
     if (els.trendingList) {
