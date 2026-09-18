@@ -1,6 +1,6 @@
 # Múltipla
 
-Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. Front-end estático (HTML, Tailwind via CDN, JavaScript ES modules) + Supabase (Auth Google, PostgreSQL, RLS). Hospedagem gratuita na Netlify ou na Vercel.
+Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. Front-end estático (HTML, Tailwind via CDN, JavaScript ES modules) + Supabase (Auth Google, PostgreSQL, RLS). Hospedagem na Cloudflare Pages e no GitHub Pages.
 
 ## Stack
 
@@ -15,19 +15,21 @@ Plataforma interativa e temporária de campanha para o Conselho de Arquitetura. 
 2. Abra **SQL Editor** e execute o arquivo `script.sql`.
    Se o schema já estiver aplicado, rode também `sql/get-trending-topics.sql` (tópicos em alta), `sql/cau-number.sql` (funções do CAU), `sql/cau-sc-ativos.sql` (lista oficial de registros ativos do CAU/SC), `sql/fix-posts-insert-cau.sql` (publicação) e `sql/lgpd-consent-profile.sql` (aceite da LGPD no perfil).
 3. **Authentication → Providers → Google**: habilite o provedor e informe Client ID / Secret do Google Cloud.
-4. **Authentication → URL Configuration** — use sempre HTTPS no Netlify (`http://` quebra o Google OAuth):
-   - **Site URL:** `https://fantastic-dodol-08e97f.netlify.app`
+4. **Authentication → URL Configuration** — use sempre HTTPS (`http://` quebra o Google OAuth):
+   - **Site URL:** `https://multipla-brx.pages.dev`
    - **Redirect URLs** (uma por linha):
-     - `https://fantastic-dodol-08e97f.netlify.app`
-     - `https://fantastic-dodol-08e97f.netlify.app/**`
+     - `https://multipla-brx.pages.dev`
+     - `https://multipla-brx.pages.dev/**`
+     - `https://marinamatt.github.io/Multipla`
+     - `https://marinamatt.github.io/Multipla/**`
      - `http://localhost:3000`
      - `http://localhost:3000/**`
 
    No Google Cloud (OAuth client):
-   - **Authorized JavaScript origins:** `https://fantastic-dodol-08e97f.netlify.app` e `http://localhost:3000`
+   - **Authorized JavaScript origins:** `https://multipla-brx.pages.dev`, `https://marinamatt.github.io` e `http://localhost:3000`
    - **Authorized redirect URIs:** `https://vjvvticwevkicmjfxyqa.supabase.co/auth/v1/callback`
 
-   O callback continua sendo o do Supabase; o domínio Netlify entra em *origins* e nas Redirect URLs acima.
+   O callback continua sendo o do Supabase; o domínio público entra em *origins* e nas Redirect URLs acima.
 5. Torne um usuário administrador (depois do primeiro login):
 
 ```sql
@@ -45,7 +47,7 @@ Edite `js/config.js`:
 ```js
 export const SUPABASE_URL = 'https://xxxx.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJ...';
-export const SITE_URL = 'https://fantastic-dodol-08e97f.netlify.app';
+export const SITE_URL = 'https://multipla-brx.pages.dev';
 ```
 
 ## 3. Rodar localmente
@@ -58,12 +60,15 @@ npx --yes serve -p 3000
 
 Abra `http://localhost:3000`.
 
-## 4. Publicar (Netlify ou Vercel)
+## 4. Publicar
 
-- **Netlify**: repositório Git + `netlify.toml` (publish = raiz). Sem comando de build além do placeholder.
-- **Vercel**: projeto estático na raiz; `vercel.json` só define cabeçalhos.
+Produção atual: [https://multipla-brx.pages.dev/](https://multipla-brx.pages.dev/) (Cloudflare Pages, branch `main`).
 
-A URL de produção já está documentada no passo 1.4. Depois de publicar, confirme as Redirect URLs no Supabase e os *Authorized JavaScript origins* no Google Cloud.
+O GitHub Pages publica em [https://marinamatt.github.io/Multipla/](https://marinamatt.github.io/Multipla/). Não use um arquivo `CNAME` até o DNS do domínio próprio (A/CNAME para o GitHub ou para o Cloudflare) estar configurado — um `CNAME` órfão tira o site do ar.
+
+- **Cloudflare Pages**: projeto `multipla-brx`, produção na `main`.
+- **GitHub Pages**: branch de publicação configurada no repositório; arquivo `.nojekyll` na raiz.
+- **Netlify / Vercel**: `netlify.toml` / `vercel.json` na raiz, se voltar a usar esses hosts.
 
 ## Privacidade e segurança
 
