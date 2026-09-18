@@ -1,0 +1,6 @@
+.netlify
+.vercel
+.DS_Store
+js/config.local.js
+.env
+.env.*
