@@ -1,15 +1,18 @@
 :root {
-  --app-bg: #fbfbff;
+  --brand-blue: #4b69fd;
+  --brand-pink: #f40887;
+  --brand-yellow: #f4c51d;
+  --app-bg: #f6f7ff;
   --app-white: #ffffff;
   --text-primary: #1d1d1f;
   --text-muted: rgba(29, 29, 31, 0.56);
   --card-radius: 20px;
-  --liquid-glass-bg: rgba(255, 255, 255, 0.4);
-  --grad-cyan: linear-gradient(135deg, #00d2ff 0%, #2d5bff 100%);
-  --grad-warm: linear-gradient(135deg, #ff4b8b 0%, #ffb800 100%);
-  --spectrum: linear-gradient(90deg, #ffb800 0%, #ff7a00 18%, #ff4b8b 40%, #8a2be2 62%, #2d5bff 82%, #00d2ff 100%);
-  --focus: #2d5bff;
-  --header-h: 4.75rem;
+  --liquid-glass-bg: rgba(255, 255, 255, 0.42);
+  --grad-cyan: linear-gradient(135deg, #4b69fd 0%, #3a54e8 100%);
+  --grad-warm: linear-gradient(135deg, #f40887 0%, #f4c51d 100%);
+  --spectrum: linear-gradient(90deg, #4b69fd 0%, #7b4af5 28%, #f40887 58%, #f4c51d 100%);
+  --focus: #4b69fd;
+  --header-h: 4.9rem;
 }
 
 *,
@@ -39,10 +42,23 @@ body.app-body::before {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 55% 42% at 8% -4%, rgba(0, 210, 255, 0.2), transparent 55%),
-    radial-gradient(ellipse 48% 38% at 96% 4%, rgba(138, 43, 226, 0.14), transparent 52%),
-    radial-gradient(ellipse 42% 36% at 88% 92%, rgba(255, 75, 139, 0.16), transparent 55%),
-    radial-gradient(ellipse 38% 30% at 6% 96%, rgba(255, 184, 0, 0.16), transparent 50%);
+    radial-gradient(ellipse 55% 42% at 8% -4%, rgba(75, 105, 253, 0.22), transparent 55%),
+    radial-gradient(ellipse 48% 38% at 96% 4%, rgba(244, 8, 135, 0.16), transparent 52%),
+    radial-gradient(ellipse 42% 36% at 88% 92%, rgba(244, 197, 29, 0.18), transparent 55%),
+    radial-gradient(ellipse 38% 30% at 6% 96%, rgba(75, 105, 253, 0.14), transparent 50%);
+}
+
+body.app-body::after {
+  content: "";
+  position: fixed;
+  right: -8%;
+  top: 12%;
+  z-index: 0;
+  width: min(48vw, 460px);
+  height: min(48vw, 460px);
+  pointer-events: none;
+  background: url("./assets/asterisco.png") center / contain no-repeat;
+  opacity: 0.1;
 }
 
 .page-shell {
@@ -93,7 +109,7 @@ body.app-body::before {
   overflow: visible;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  background: rgba(255, 255, 255, 0.38);
+  background: rgba(246, 247, 255, 0.48);
 }
 
 .site-header::after {
@@ -128,10 +144,17 @@ body.app-body::before {
 
 .brand-logo {
   display: block;
-  height: 56px;
+  height: 52px;
   width: auto;
-  max-width: min(280px, 36vw);
+  max-width: min(280px, 52vw);
   object-fit: contain;
+}
+
+.brand-mark {
+  display: block;
+  width: min(220px, 56vw);
+  height: auto;
+  margin: 0 auto 1.35rem;
 }
 
 .header-search {
@@ -175,10 +198,10 @@ body.app-body::before {
   border-radius: var(--card-radius);
   backdrop-filter: blur(25px) saturate(220%);
   -webkit-backdrop-filter: blur(25px) saturate(220%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(75, 105, 253, 0.12);
   box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
-    0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.42),
+    0 8px 32px 0 rgba(75, 105, 253, 0.08);
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
@@ -186,26 +209,26 @@ body.app-body::before {
   transform: translateY(-5px);
   box-shadow:
     inset 0 2px 2px 0 rgba(255, 255, 255, 0.4),
-    0 12px 48px 0 rgba(31, 38, 135, 0.1);
+    0 12px 48px 0 rgba(75, 105, 253, 0.12);
 }
 
 .liquid-card:focus-within:not(.search-shell) {
-  outline: 2px solid rgba(63, 94, 251, 0.35);
+  outline: 2px solid rgba(75, 105, 253, 0.35);
   outline-offset: 3px;
 }
 
 .category-ideia {
   background:
-    linear-gradient(135deg, rgba(36, 198, 220, 0.2) 0%, rgba(63, 94, 251, 0.1) 100%),
+    linear-gradient(135deg, rgba(75, 105, 253, 0.2) 0%, rgba(244, 197, 29, 0.08) 100%),
     var(--liquid-glass-bg);
-  border: 1px solid rgba(36, 198, 220, 0.3);
+  border: 1px solid rgba(75, 105, 253, 0.28);
 }
 
 .category-reclamacao {
   background:
-    linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 217, 61, 0.1) 100%),
+    linear-gradient(135deg, rgba(244, 8, 135, 0.16) 0%, rgba(244, 197, 29, 0.12) 100%),
     var(--liquid-glass-bg);
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  border: 1px solid rgba(244, 8, 135, 0.26);
 }
 
 .badge {
@@ -216,11 +239,11 @@ body.app-body::before {
 }
 
 .badge-ideia {
-  color: #1b6f9a;
+  color: var(--brand-blue);
 }
 
 .badge-reclamacao {
-  color: #c94a4a;
+  color: var(--brand-pink);
 }
 
 .trending-card:hover {
@@ -233,7 +256,7 @@ body.app-body::before {
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #6b21a8;
+  color: var(--brand-pink);
 }
 
 .topic-list {
@@ -252,20 +275,20 @@ body.app-body::before {
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
-  color: #6b21a8;
-  background: rgba(138, 43, 226, 0.1);
-  border: 1px solid rgba(138, 43, 226, 0.2);
+  color: var(--brand-blue);
+  background: rgba(75, 105, 253, 0.1);
+  border: 1px solid rgba(75, 105, 253, 0.2);
 }
 
 .topic-chip:hover,
 .topic-chip.is-active {
-  background: rgba(138, 43, 226, 0.2);
+  background: rgba(75, 105, 253, 0.2);
 }
 
 .topic-count {
   border-radius: 999px;
-  background: rgba(138, 43, 226, 0.18);
-  color: #5b21b6;
+  background: rgba(244, 8, 135, 0.16);
+  color: var(--brand-pink);
   padding: 0.05rem 0.45rem;
   font-size: 0.65rem;
   font-weight: 700;
@@ -282,6 +305,10 @@ body.app-body::before {
   justify-content: space-between;
   gap: 0.85rem 1.25rem;
   padding: 1.1rem 1.25rem;
+  border-color: rgba(75, 105, 253, 0.18);
+  background:
+    linear-gradient(135deg, rgba(75, 105, 253, 0.1) 0%, rgba(244, 8, 135, 0.08) 52%, rgba(244, 197, 29, 0.1) 100%),
+    var(--liquid-glass-bg);
 }
 
 .guest-prompt:hover {
@@ -400,7 +427,7 @@ body.app-body::before {
 .btn-primary {
   color: #fff;
   background: var(--grad-cyan);
-  box-shadow: 0 8px 20px rgba(63, 94, 251, 0.18);
+  box-shadow: 0 8px 20px rgba(75, 105, 253, 0.28);
 }
 
 .btn-warm {
@@ -415,8 +442,8 @@ body.app-body::before {
 }
 
 .btn-support {
-  background: rgba(36, 198, 220, 0.1);
-  color: #1b6f9a;
+  background: rgba(75, 105, 253, 0.1);
+  color: var(--brand-blue);
   border-radius: 999px;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -427,11 +454,11 @@ body.app-body::before {
 
 .btn-support:hover,
 .btn-support[aria-pressed="true"] {
-  background: rgba(36, 198, 220, 0.2);
+  background: rgba(75, 105, 253, 0.2);
 }
 
 .btn-support[aria-pressed="true"] {
-  color: #3f5efb;
+  color: var(--brand-blue);
 }
 
 .btn-text {
@@ -467,8 +494,8 @@ body.app-body::before {
 
 .btn-share:hover,
 .btn-share[aria-expanded="true"] {
-  color: #1b6f9a;
-  background: rgba(36, 198, 220, 0.16);
+  color: var(--brand-pink);
+  background: rgba(244, 8, 135, 0.12);
 }
 
 .share-icon {
@@ -592,23 +619,23 @@ body > .share-popover {
   100% {
     box-shadow:
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.3),
-      0 0 0 0 rgba(63, 94, 251, 0);
+      0 0 0 0 rgba(75, 105, 253, 0);
   }
   40% {
     box-shadow:
       inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
-      0 0 0 4px rgba(63, 94, 251, 0.38),
-      0 0 40px 10px rgba(36, 198, 220, 0.42);
+      0 0 0 4px rgba(75, 105, 253, 0.38),
+      0 0 40px 10px rgba(244, 8, 135, 0.28);
   }
 }
 
 .liquid-card.is-shared-highlight {
-  outline: 3px solid rgba(45, 91, 255, 0.72);
+  outline: 3px solid rgba(75, 105, 253, 0.72);
   outline-offset: 5px;
   box-shadow:
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.45),
-    0 0 0 6px rgba(63, 94, 251, 0.2),
-    0 0 44px 12px rgba(36, 198, 220, 0.42);
+    0 0 0 6px rgba(244, 197, 29, 0.28),
+    0 0 44px 12px rgba(244, 8, 135, 0.28);
   animation: shared-glow 1.15s ease-in-out 3;
 }
 
@@ -696,11 +723,11 @@ body > .share-popover {
 
 .header-search .search-shell.liquid-card:focus-within {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(75, 105, 253, 0.28);
   box-shadow:
     inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
-    0 0 0 1px rgba(29, 29, 31, 0.06),
-    0 8px 22px rgba(31, 38, 135, 0.08);
+    0 0 0 1px rgba(75, 105, 253, 0.12),
+    0 8px 22px rgba(75, 105, 253, 0.08);
 }
 
 .search-shell:hover,
@@ -732,7 +759,7 @@ body > .share-popover {
 }
 
 .search-input::selection {
-  background: rgba(29, 29, 31, 0.1);
+  background: rgba(75, 105, 253, 0.18);
   color: inherit;
 }
 
@@ -832,7 +859,7 @@ body > .share-popover {
 .comment-replies {
   margin: 0.65rem 0 0.15rem 0.35rem;
   padding-left: 0.85rem;
-  border-left: 2px solid rgba(45, 91, 255, 0.28);
+  border-left: 2px solid rgba(75, 105, 253, 0.32);
   display: grid;
   gap: 0.55rem;
 }
@@ -844,7 +871,7 @@ body > .share-popover {
 .reply-form {
   margin-top: 0.65rem;
   padding: 0.7rem 0.75rem 0.75rem 0.85rem;
-  border-left: 2px solid rgba(36, 198, 220, 0.45);
+  border-left: 2px solid rgba(244, 8, 135, 0.42);
   display: grid;
   gap: 0.5rem;
 }
@@ -877,8 +904,8 @@ body > .share-popover {
 
 .btn-follow:hover,
 .btn-follow[aria-pressed="true"] {
-  color: #1b6f9a;
-  background: rgba(36, 198, 220, 0.16);
+  color: var(--brand-blue);
+  background: rgba(75, 105, 253, 0.14);
 }
 
 .follow-icon {
@@ -929,7 +956,7 @@ body > .share-popover {
   height: 1.1rem;
   padding: 0 0.28rem;
   border-radius: 999px;
-  background: #e11d48;
+  background: var(--brand-pink);
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
@@ -980,7 +1007,7 @@ body > .share-popover {
 }
 
 .notify-item.is-unread {
-  background: rgba(36, 198, 220, 0.12);
+  background: rgba(244, 8, 135, 0.1);
 }
 
 .notify-empty {
@@ -1153,7 +1180,7 @@ dialog.settings-sheet {
 }
 
 .pref-switch input:checked + .pref-switch-ui {
-  background: #2d5bff;
+  background: var(--brand-blue);
 }
 
 .pref-switch input:checked + .pref-switch-ui::after {
@@ -1234,6 +1261,34 @@ dialog.settings-sheet {
   -webkit-backdrop-filter: blur(18px) saturate(180%);
 }
 
+.about-axis:nth-child(1) {
+  background:
+    linear-gradient(135deg, rgba(75, 105, 253, 0.14), rgba(255, 255, 255, 0.36)),
+    rgba(255, 255, 255, 0.28);
+  border-color: rgba(75, 105, 253, 0.22);
+}
+
+.about-axis:nth-child(2) {
+  background:
+    linear-gradient(135deg, rgba(244, 8, 135, 0.12), rgba(255, 255, 255, 0.36)),
+    rgba(255, 255, 255, 0.28);
+  border-color: rgba(244, 8, 135, 0.22);
+}
+
+.about-axis:nth-child(3) {
+  background:
+    linear-gradient(135deg, rgba(244, 197, 29, 0.18), rgba(255, 255, 255, 0.36)),
+    rgba(255, 255, 255, 0.28);
+  border-color: rgba(244, 197, 29, 0.32);
+}
+
+.about-axis:nth-child(4) {
+  background:
+    linear-gradient(135deg, rgba(75, 105, 253, 0.1), rgba(244, 8, 135, 0.1)),
+    rgba(255, 255, 255, 0.28);
+  border-color: rgba(75, 105, 253, 0.18);
+}
+
 .about-axis h3 {
   margin: 0 0 0.4rem;
   font-size: 0.95rem;
@@ -1291,8 +1346,8 @@ dialog.settings-sheet {
   height: 2.15rem;
   flex-shrink: 0;
   border-radius: 999px;
-  color: #2d5bff;
-  background: rgba(45, 91, 255, 0.12);
+  color: var(--brand-pink);
+  background: rgba(244, 8, 135, 0.12);
 }
 
 .about-channel-icon svg {
@@ -1476,11 +1531,12 @@ dialog::backdrop {
   background: rgba(255, 255, 255, 0.46);
   backdrop-filter: blur(20px) saturate(200%);
   -webkit-backdrop-filter: blur(20px) saturate(200%);
-  color: #2d5bff;
+  color: var(--brand-blue);
   cursor: pointer;
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.7),
-    0 14px 36px rgba(45, 91, 255, 0.32);
+    0 14px 36px rgba(75, 105, 253, 0.28),
+    0 0 0 1px rgba(244, 8, 135, 0.08);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1501,8 +1557,8 @@ dialog::backdrop {
 
 @media (max-width: 767px) {
   .brand-logo {
-    height: 40px;
-    max-width: min(148px, 38vw);
+    height: 36px;
+    max-width: min(200px, 54vw);
   }
 
   .search-toggle {
@@ -1538,8 +1594,8 @@ dialog::backdrop {
   }
 
   .header-search.is-open .search-toggle {
-    background: rgba(45, 91, 255, 0.16);
-    color: #2d5bff;
+    background: rgba(75, 105, 253, 0.14);
+    color: var(--brand-blue);
   }
 
   .header-inner {
