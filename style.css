@@ -57,7 +57,7 @@ body.app-body::after {
   width: min(48vw, 460px);
   height: min(48vw, 460px);
   pointer-events: none;
-  background: url("./assets/asterisco.png") center / contain no-repeat;
+  background: url("./assets/flor-v3.png") center / contain no-repeat;
   opacity: 0.1;
 }
 
