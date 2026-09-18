@@ -48,19 +48,6 @@ body.app-body::before {
     radial-gradient(ellipse 38% 30% at 6% 96%, rgba(75, 105, 253, 0.14), transparent 50%);
 }
 
-body.app-body::after {
-  content: "";
-  position: fixed;
-  right: -8%;
-  top: 12%;
-  z-index: 0;
-  width: min(48vw, 460px);
-  height: min(48vw, 460px);
-  pointer-events: none;
-  background: url("./assets/flor-v3.png") center / contain no-repeat;
-  opacity: 0.1;
-}
-
 .page-shell {
   position: relative;
   z-index: 1;
