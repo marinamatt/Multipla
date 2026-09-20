@@ -487,7 +487,8 @@ function escapeHtml(value) {
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function safeHttpUrl(value) {
@@ -1326,7 +1327,7 @@ function renderCommentNode(comment, allowReply) {
     : '';
   return `
     <article class="liquid-card comment-item ${allowReply ? '' : 'comment-reply'} ${comment.is_hidden ? 'opacity-70' : ''}" data-comment-id="${comment.id}">
-      <p class="meta"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${comment.created_at}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
+      <p class="meta"><strong>${escapeHtml(comment.author_name)}</strong> · <time datetime="${escapeHtml(comment.created_at)}">${formatDate(comment.created_at)}</time>${hiddenNote}</p>
       <p class="mt-1 whitespace-pre-wrap text-sm">${escapeHtml(comment.content)}</p>
       <div class="comment-actions">${commentActionButtons(comment, allowReply)}</div>
       ${replyForm}
@@ -1427,6 +1428,13 @@ async function submitComment(event, postId, card, parentId = null) {
   event.preventDefault();
   const form = event.currentTarget;
   if (!assertNotBot(form)) return;
+  if (!hasCauNumber() || !hasLgpdConsent()) {
+    const feedback =
+      form.querySelector('[data-reply-feedback]') || card.querySelector('[data-comment-feedback]');
+    showFeedback(feedback, 'Informe o registro do CAU e aceite os termos da LGPD para comentar.', true);
+    openCauModal();
+    return;
+  }
   const feedback =
     form.querySelector('[data-reply-feedback]') || card.querySelector('[data-comment-feedback]');
   const content = (form.querySelector('[data-reply-input], [data-comment-input]')?.value || '').trim();
