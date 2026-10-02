@@ -1611,6 +1611,27 @@ function isHelpOpen() {
   return document.getElementById('btn-como-usar')?.getAttribute('aria-expanded') === 'true';
 }
 
+function placeHelpPanel() {
+  const btn = document.getElementById('btn-como-usar');
+  const panel = document.getElementById('como-usar-panel');
+  if (!btn || !panel) return;
+  const margin = 12;
+  const rect = btn.getBoundingClientRect();
+  const narrow = window.innerWidth <= 767;
+  const width = narrow ? window.innerWidth - margin * 2 : Math.min(448, window.innerWidth - margin * 2);
+  let left = narrow ? margin : rect.right - width;
+  left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+  const top = Math.max(margin, rect.bottom + 8);
+  const maxHeight = Math.max(140, window.innerHeight - top - margin);
+  panel.style.position = 'fixed';
+  panel.style.left = `${left}px`;
+  panel.style.right = 'auto';
+  panel.style.top = `${top}px`;
+  panel.style.width = `${width}px`;
+  panel.style.maxHeight = `${maxHeight}px`;
+  panel.style.zIndex = '80';
+}
+
 function setHelpOpen(open, { focusPanel = false } = {}) {
   const root = document.getElementById('header-help');
   const btn = document.getElementById('btn-como-usar');
@@ -1618,15 +1639,22 @@ function setHelpOpen(open, { focusPanel = false } = {}) {
   if (!root || !btn || !panel) return;
   const next = Boolean(open);
   root.classList.toggle('is-open', next);
+  panel.classList.toggle('is-open', next);
   btn.setAttribute('aria-expanded', next ? 'true' : 'false');
   panel.setAttribute('aria-hidden', next ? 'false' : 'true');
   if (!next) {
-    panel.setAttribute('inert', '');
     panel.tabIndex = -1;
+    panel.style.pointerEvents = 'none';
+    window.setTimeout(() => {
+      if (!isHelpOpen()) panel.hidden = true;
+    }, 240);
     return;
   }
-  panel.removeAttribute('inert');
+  panel.hidden = false;
+  panel.style.pointerEvents = 'auto';
   panel.tabIndex = 0;
+  if (panel.parentElement !== document.body) document.body.appendChild(panel);
+  placeHelpPanel();
   closeNotifyMenu();
   closeUserMenu();
   setHeaderSearchOpen(false);
@@ -1652,6 +1680,7 @@ function bindHelpPanel() {
   if (!root || !btn || !panel || root.dataset.bound === '1') return;
   root.dataset.bound = '1';
   panel.tabIndex = -1;
+  panel.hidden = true;
 
   btn.addEventListener('click', (event) => {
     event.stopPropagation();
@@ -1660,9 +1689,21 @@ function bindHelpPanel() {
   });
 
   document.addEventListener('click', (event) => {
-    if (!isHelpOpen() || root.contains(event.target)) return;
+    if (!isHelpOpen()) return;
+    if (root.contains(event.target) || panel.contains(event.target)) return;
     closeHelp();
   });
+
+  window.addEventListener('resize', () => {
+    if (isHelpOpen()) placeHelpPanel();
+  });
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (isHelpOpen()) placeHelpPanel();
+    },
+    true,
+  );
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || !isHelpOpen()) return;

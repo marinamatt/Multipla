@@ -94,19 +94,33 @@ body.app-body::before {
   top: 0;
   z-index: 40;
   overflow: visible;
+  isolation: isolate;
+  background: transparent;
+}
+
+.site-header::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(246, 247, 255, 0.48);
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
-  background: rgba(246, 247, 255, 0.48);
 }
 
 .site-header::after {
   content: "";
+  position: relative;
+  z-index: 1;
   display: block;
   height: 3px;
   background: var(--spectrum);
 }
 
 .header-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
@@ -172,20 +186,7 @@ body.app-body::before {
   background: rgba(255, 255, 255, 0.62);
 }
 
-.header-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  flex-shrink: 0;
-}
-
-.header-actions > .auth-slot {
-  margin-left: 0;
-}
-
 .auth-slot {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -194,6 +195,7 @@ body.app-body::before {
 
 .header-help {
   position: relative;
+  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -248,11 +250,16 @@ body.app-body::before {
   transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
 }
 
+.help-panel.is-open,
 .header-help.is-open .help-panel {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: translateY(0);
+}
+
+.help-panel[hidden] {
+  display: none !important;
 }
 
 .help-panel-title {
@@ -1719,16 +1726,10 @@ dialog::backdrop {
   }
 
   .header-inner {
-    position: relative;
     flex-wrap: wrap;
     row-gap: 0.45rem;
   }
 
-  .header-actions {
-    display: contents;
-  }
-
-  .header-actions > .auth-slot,
   .auth-slot {
     margin-left: auto;
   }
@@ -1736,6 +1737,7 @@ dialog::backdrop {
   .header-help {
     flex: 1 1 100%;
     order: 5;
+    margin-left: 0;
   }
 
   .help-toggle {
