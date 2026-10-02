@@ -795,6 +795,7 @@ function setHeaderSearchOpen(open) {
 
 function toggleHeaderSearch() {
   const open = !els.headerSearch?.classList.contains('is-open');
+  if (open) closeHelp();
   setHeaderSearchOpen(open);
 }
 
@@ -1606,6 +1607,69 @@ function renderNotifyMenu() {
     .join('');
 }
 
+function isHelpOpen() {
+  return document.getElementById('btn-como-usar')?.getAttribute('aria-expanded') === 'true';
+}
+
+function setHelpOpen(open, { focusPanel = false } = {}) {
+  const root = document.getElementById('header-help');
+  const btn = document.getElementById('btn-como-usar');
+  const panel = document.getElementById('como-usar-panel');
+  if (!root || !btn || !panel) return;
+  const next = Boolean(open);
+  root.classList.toggle('is-open', next);
+  btn.setAttribute('aria-expanded', next ? 'true' : 'false');
+  panel.setAttribute('aria-hidden', next ? 'false' : 'true');
+  if (!next) {
+    panel.setAttribute('inert', '');
+    panel.tabIndex = -1;
+    return;
+  }
+  panel.removeAttribute('inert');
+  panel.tabIndex = 0;
+  closeNotifyMenu();
+  closeUserMenu();
+  setHeaderSearchOpen(false);
+  if (focusPanel) {
+    window.requestAnimationFrame(() => panel.focus({ preventScroll: true }));
+  }
+}
+
+function closeHelp({ restoreFocus = false } = {}) {
+  if (!isHelpOpen()) return;
+  const root = document.getElementById('header-help');
+  const active = document.activeElement;
+  setHelpOpen(false);
+  if (restoreFocus && root && active && root.contains(active)) {
+    document.getElementById('btn-como-usar')?.focus({ preventScroll: true });
+  }
+}
+
+function bindHelpPanel() {
+  const root = document.getElementById('header-help');
+  const btn = document.getElementById('btn-como-usar');
+  const panel = document.getElementById('como-usar-panel');
+  if (!root || !btn || !panel || root.dataset.bound === '1') return;
+  root.dataset.bound = '1';
+  panel.tabIndex = -1;
+
+  btn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const willOpen = !isHelpOpen();
+    setHelpOpen(willOpen, { focusPanel: willOpen && event.detail === 0 });
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!isHelpOpen() || root.contains(event.target)) return;
+    closeHelp();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || !isHelpOpen()) return;
+    closeHelp({ restoreFocus: true });
+  });
+}
+
 function closeNotifyMenu() {
   els.notifyMenu?.classList.add('hidden');
   els.notifyBell?.setAttribute('aria-expanded', 'false');
@@ -1623,6 +1687,7 @@ function toggleUserMenu() {
   const btn = document.getElementById('user-menu-btn');
   if (!menu) return;
   const willOpen = menu.classList.contains('hidden');
+  closeHelp();
   closeNotifyMenu();
   if (!willOpen) {
     closeUserMenu();
@@ -1661,6 +1726,7 @@ function toggleNotifyMenu() {
     closeNotifyMenu();
     return;
   }
+  closeHelp();
   closeUserMenu();
   renderNotifyMenu();
   els.notifyMenu?.classList.remove('hidden');
@@ -2048,6 +2114,7 @@ function bindStaticEvents() {
 }
 
 async function init() {
+  bindHelpPanel();
   if (!CONFIG_READY) {
     showConfigBanner(
       'Preencha <code>js/config.js</code> com a URL e a chave anon do Supabase e rode <code>script.sql</code> no SQL Editor. Sem a chave <code>service_role</code>.',

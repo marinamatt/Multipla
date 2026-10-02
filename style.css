@@ -172,12 +172,145 @@ body.app-body::before {
   background: rgba(255, 255, 255, 0.62);
 }
 
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.header-actions > .auth-slot {
+  margin-left: 0;
+}
+
 .auth-slot {
   margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+}
+
+.header-help {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.help-toggle {
+  padding: 0.55rem 0.95rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(75, 105, 253, 0.24);
+}
+
+.help-toggle[aria-expanded="true"] {
+  box-shadow: 0 8px 22px rgba(75, 105, 253, 0.34);
+}
+
+.help-icon,
+.help-chevron {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.help-chevron {
+  transition: transform 0.22s ease;
+}
+
+.header-help.is-open .help-chevron {
+  transform: rotate(180deg);
+}
+
+.help-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 80;
+  width: min(28rem, calc(100vw - 1.5rem));
+  max-height: min(32rem, calc(100dvh - var(--header-h) - 1.25rem));
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 1.05rem;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(75, 105, 253, 0.14);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
+    0 18px 40px rgba(75, 105, 253, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+}
+
+.header-help.is-open .help-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.help-panel-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+}
+
+.help-section + .help-section {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(75, 105, 253, 0.12);
+}
+
+.help-section h3 {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.help-section ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.6rem;
+  counter-reset: help-step;
+}
+
+.help-section li {
+  counter-increment: help-step;
+  display: grid;
+  grid-template-columns: 1.55rem 1fr;
+  gap: 0.6rem;
+  align-items: start;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.help-section li::before {
+  content: counter(help-step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  margin-top: 0.05rem;
+  border-radius: 999px;
+  background: rgba(75, 105, 253, 0.12);
+  color: var(--brand-blue);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .liquid-card {
@@ -1587,6 +1720,33 @@ dialog::backdrop {
 
   .header-inner {
     position: relative;
+    flex-wrap: wrap;
+    row-gap: 0.45rem;
+  }
+
+  .header-actions {
+    display: contents;
+  }
+
+  .header-actions > .auth-slot,
+  .auth-slot {
+    margin-left: auto;
+  }
+
+  .header-help {
+    flex: 1 1 100%;
+    order: 5;
+  }
+
+  .help-toggle {
+    width: 100%;
+  }
+
+  .help-panel {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: min(70dvh, calc(100dvh - 8.5rem));
   }
 
   .user-menu-identity {

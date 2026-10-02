@@ -38,7 +38,7 @@
         },
       };
     </script>
-    <link rel="stylesheet" href="./style.css?v=chapa3b" />
+    <link rel="stylesheet" href="./style.css?v=chapa3c" />
   </head>
   <body class="app-body">
     <div class="page-shell">
@@ -111,8 +111,56 @@
             <div id="notify-menu" class="notify-menu hidden" role="menu"></div>
             </div>
           </div>
-          <div class="auth-slot" id="auth-slot">
-            <div class="h-8 w-36 animate-pulse rounded-full bg-white/40" aria-hidden="true"></div>
+          <div class="header-actions">
+            <div class="header-help" id="header-help">
+              <button
+                type="button"
+                id="btn-como-usar"
+                class="btn btn-primary help-toggle"
+                aria-expanded="false"
+                aria-controls="como-usar-panel"
+                aria-haspopup="true"
+              >
+                <svg class="help-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                  <path d="M12 17h.01"></path>
+                </svg>
+                <span>Como usar</span>
+                <svg class="help-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </button>
+              <div
+                id="como-usar-panel"
+                class="help-panel"
+                role="region"
+                aria-labelledby="como-usar-heading"
+                aria-hidden="true"
+                inert
+              >
+                <h2 id="como-usar-heading" class="help-panel-title">Como usar</h2>
+                <section class="help-section" aria-labelledby="como-usar-login-title">
+                  <h3 id="como-usar-login-title">Seção 1: Como Fazer Login / Acessar</h3>
+                  <ol>
+                    <li>Clique no botão de acesso ou entrada no canto superior da página.</li>
+                    <li>Informe suas credenciais cadastradas (CPF/E-mail e Senha).</li>
+                    <li>Caso seja o primeiro acesso ou necessite de validação, siga as instruções de recuperação/confirmação via e-mail/SMS.</li>
+                  </ol>
+                </section>
+                <section class="help-section" aria-labelledby="como-usar-interact-title">
+                  <h3 id="como-usar-interact-title">Seção 2: Como Interagir na Plataforma</h3>
+                  <ol>
+                    <li>Navegue pelo menu principal para explorar os serviços e módulos disponíveis.</li>
+                    <li>Preencha os formulários/solicitações indicados para gerar seus protocolos ou requerimentos.</li>
+                    <li>Acompanhe o status das suas solicitações no painel do usuário e utilize os canais de suporte/contato integrados caso precise de ajuda.</li>
+                  </ol>
+                </section>
+              </div>
+            </div>
+            <div class="auth-slot" id="auth-slot">
+              <div class="h-8 w-36 animate-pulse rounded-full bg-white/40" aria-hidden="true"></div>
+            </div>
           </div>
         </div>
       </header>
